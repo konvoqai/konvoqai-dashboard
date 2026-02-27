@@ -1,8 +1,11 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { apiClient } from '@/lib/api/axios-instance';
+import { useLogout, useUser } from '@/lib/auth/auth-hooks';
 import {
   Activity,
   Bot,
@@ -16,12 +19,9 @@ import {
   Star,
   UserCircle2,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useLogout, useUser } from '@/lib/auth/auth-hooks';
-import { apiClient } from '@/lib/api/axios-instance';
+import { useRouter } from 'next/navigation';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 type SectionKey = 'overview' | 'sources' | 'widget' | 'embed' | 'chat' | 'feedback';
 
@@ -350,7 +350,7 @@ export function DashboardApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 text-slate-900">
+    <div className="min-h-screen bg-linear-to-b from-slate-50 to-slate-100 text-slate-900">
       <div className="flex min-h-screen">
         <aside className="w-72 border-r border-slate-200 bg-white/80 backdrop-blur">
           <div className="flex h-full flex-col p-5">
@@ -368,11 +368,10 @@ export function DashboardApp() {
                     key={entry.key}
                     type="button"
                     onClick={() => setActiveSection(entry.key)}
-                    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${
-                      active
+                    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${active
                         ? 'bg-slate-900 text-white'
                         : 'text-slate-700 hover:bg-slate-100'
-                    }`}
+                      }`}
                   >
                     <Icon className="h-4 w-4" />
                     {entry.label}
@@ -667,10 +666,10 @@ export function DashboardApp() {
                   <CardDescription>Widget rendered from backend public bundle.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <iframe
-                  ref={iframeRef}
-                  src={widgetPreviewURL}
-                  className="h-[540px] w-full rounded-lg border border-slate-200 bg-white"
+                  <iframe
+                    ref={iframeRef}
+                    src={widgetPreviewURL}
+                    className="h-[540px] w-full rounded-lg border border-slate-200 bg-white"
                     onLoad={() => {
                       setIframeReady(true);
                       postWidgetConfig(widgetConfig);
@@ -739,9 +738,8 @@ export function DashboardApp() {
                   {selectedChat?.messages?.map((message: ChatMessage, idx: number) => (
                     <div
                       key={`${message.createdAt}-${idx}`}
-                      className={`rounded-md p-3 text-sm ${
-                        message.role === 'user' ? 'bg-slate-100' : 'bg-sky-50'
-                      }`}
+                      className={`rounded-md p-3 text-sm ${message.role === 'user' ? 'bg-slate-100' : 'bg-sky-50'
+                        }`}
                     >
                       <p className="mb-1 text-xs uppercase text-slate-500">{message.role}</p>
                       <p>{message.content}</p>
