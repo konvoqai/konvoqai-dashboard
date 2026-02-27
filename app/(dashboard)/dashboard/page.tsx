@@ -1,17 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useUser, useLogout } from '@/lib/auth/auth-hooks';
-import { apiClient } from '@/lib/api/axios-instance';
+import { DashboardApp } from '@/components/DashboardApp';
+/*
 
 interface OnboardingStatusResponse {
   success: boolean;
   shouldOnboard: boolean;
 }
+*/
 
+export default function DashboardPage() {
+  return <DashboardApp />;
+}
+
+/*
 export default function DashboardPage() {
   const router = useRouter();
   const { user, isLoading } = useUser();
@@ -165,3 +167,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+*/

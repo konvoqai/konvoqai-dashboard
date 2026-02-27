@@ -17,6 +17,12 @@ export interface User {
   requiresProfileCompletion?: boolean;
   profilePromptRequiredAt?: string | null;
   profileCompletedAt?: string | null;
+  onboardingCompleted?: boolean;
+  onboardingCompletedAt?: string | null;
+  planLimits?: {
+    scrapedPages: number;
+    documents: number;
+  };
   createdAt?: string;
   updatedAt?: string;
 }

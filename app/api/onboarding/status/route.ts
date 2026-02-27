@@ -8,6 +8,7 @@ interface ScraperStatsResponse {
   success: boolean;
   stats?: {
     sources: number;
+    scrapedPages?: number;
     documents: number;
     pendingJobs?: number;
   };
@@ -37,18 +38,23 @@ export async function GET() {
     ]);
 
     const loginCount = meRes.data?.user?.loginCount ?? 0;
+    const onboardingCompleted = !!meRes.data?.user?.onboardingCompleted;
+    const planLimits = meRes.data?.user?.planLimits ?? { scrapedPages: 30, documents: 5 };
     const sources = statsRes.data?.stats?.sources ?? 0;
+    const scrapedPages = statsRes.data?.stats?.scrapedPages ?? sources;
     const documents = statsRes.data?.stats?.documents ?? 0;
     const pendingJobs = statsRes.data?.stats?.pendingJobs ?? 0;
-    const hasAnySource = sources > 0 || documents > 0;
-    const shouldOnboard = loginCount <= 1 && (!hasAnySource || pendingJobs > 0);
+    const shouldOnboard = !onboardingCompleted;
 
     return NextResponse.json({
       success: true,
       shouldOnboard,
+      onboardingCompleted,
       loginCount,
+      planLimits,
       stats: {
         sources,
+        scrapedPages,
         documents,
         pendingJobs,
       },
