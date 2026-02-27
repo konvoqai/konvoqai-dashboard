@@ -19,6 +19,8 @@ export async function GET(request: NextRequest) {
     }
 
     const state = crypto.randomBytes(16).toString('hex');
+    const codeVerifier = crypto.randomBytes(32).toString('base64url');
+    const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
 
     const params = new URLSearchParams({
       client_id: clientId,
@@ -28,11 +30,23 @@ export async function GET(request: NextRequest) {
       access_type: 'offline',
       prompt: 'select_account',
       state,
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256',
     });
 
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
-    return NextResponse.json({ success: true, authUrl });
+    const response = NextResponse.json({ success: true, authUrl });
+    const cookieOpts = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      maxAge: 600,
+      path: '/',
+    };
+    response.cookies.set('oauth_state', state, cookieOpts);
+    response.cookies.set('oauth_code_verifier', codeVerifier, cookieOpts);
+    return response;
   } catch (error) {
     return NextResponse.json(
       { success: false, message: 'Failed to generate Google OAuth URL' },

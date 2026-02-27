@@ -158,7 +158,8 @@ export function DashboardApp() {
   const postWidgetConfig = useCallback((config = widgetConfig) => {
     const target = iframeRef.current?.contentWindow;
     if (!target) return;
-    target.postMessage({ type: 'konvoq:widget-config', config }, '*');
+    const previewOrigin = new URL(widgetPreviewURL).origin;
+    target.postMessage({ type: 'konvoq:widget-config', config }, previewOrigin);
   }, [widgetConfig]);
 
   const refreshUsage = useCallback(async () => {

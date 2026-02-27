@@ -11,10 +11,21 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
+  const state = searchParams.get('state');
 
   if (error || !code) {
     const msg = error || 'missing_code';
     return NextResponse.redirect(`${appUrl}/login?error=${encodeURIComponent(msg)}`);
+  }
+
+  // Validate state parameter to prevent CSRF attacks
+  const storedState = request.cookies.get('oauth_state')?.value;
+  const codeVerifier = request.cookies.get('oauth_code_verifier')?.value;
+  if (!storedState || state !== storedState) {
+    return NextResponse.redirect(`${appUrl}/login?error=${encodeURIComponent('invalid_state')}`);
+  }
+  if (!codeVerifier) {
+    return NextResponse.redirect(`${appUrl}/login?error=${encodeURIComponent('missing_verifier')}`);
   }
 
   try {
@@ -22,7 +33,7 @@ export async function GET(request: NextRequest) {
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET!;
     const redirectUri = `${appUrl}/api/auth/google/callback`;
 
-    // 1) Exchange authorization code for Google tokens.
+    // 1) Exchange authorization code for Google tokens (with PKCE code_verifier).
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -32,6 +43,7 @@ export async function GET(request: NextRequest) {
         client_secret: clientSecret,
         redirect_uri: redirectUri,
         grant_type: 'authorization_code',
+        code_verifier: codeVerifier,
       }),
     });
 
@@ -77,7 +89,11 @@ export async function GET(request: NextRequest) {
     loginUrl.searchParams.set('step', 'code');
     loginUrl.searchParams.set('email', email);
     loginUrl.searchParams.set('provider', 'google');
-    return NextResponse.redirect(loginUrl.toString());
+    const redirectResponse = NextResponse.redirect(loginUrl.toString());
+    // Clear the one-time OAuth cookies
+    redirectResponse.cookies.delete('oauth_state');
+    redirectResponse.cookies.delete('oauth_code_verifier');
+    return redirectResponse;
   } catch (err) {
     console.error('Google OAuth callback error:', err);
     return NextResponse.redirect(`${appUrl}/login?error=${encodeURIComponent('google_auth_failed')}`);

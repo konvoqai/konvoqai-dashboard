@@ -86,6 +86,8 @@ export function EmailLoginForm({
           <Input
             id="code"
             type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             placeholder="Enter 6-digit code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
