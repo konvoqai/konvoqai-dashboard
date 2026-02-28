@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
               "connect-src 'self' https://accounts.google.com",
-              `frame-src 'self' ${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3008'}`,
+              `frame-src 'self' ${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}`,
               "object-src 'none'",
               "base-uri 'self'",
             ].join('; '),

@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 // Backend URL from environment variable
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3008';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
 
 /**
  * Axios instance for Next.js API routes to communicate with the backend

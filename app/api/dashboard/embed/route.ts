@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { backendClient } from '@/lib/api/backend-client';
 import { handleApiError } from '@/lib/utils/error-handler';
-import { requireAccessToken, buildAuthorizedHeaders } from '../shared';
+import { NextRequest, NextResponse } from 'next/server';
+import { buildAuthorizedHeaders, requireAccessToken } from '../shared';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3008';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
 const WIDGET_PUBLIC_URL = process.env.WIDGET_PUBLIC_URL || BACKEND_URL;
 
 export async function GET(request: NextRequest) {

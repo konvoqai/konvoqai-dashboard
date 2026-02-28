@@ -45,7 +45,7 @@ const defaultWidgetConfig = {
   borderRadius: 24,
   fontSize: 14,
 };
-const widgetPreviewURL = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3008'}/widget/preview`;
+const widgetPreviewURL = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/widget/preview`;
 
 interface UsageEnvelope {
   user?: {
@@ -369,8 +369,8 @@ export function DashboardApp() {
                     type="button"
                     onClick={() => setActiveSection(entry.key)}
                     className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${active
-                        ? 'bg-slate-900 text-white'
-                        : 'text-slate-700 hover:bg-slate-100'
+                      ? 'bg-slate-900 text-white'
+                      : 'text-slate-700 hover:bg-slate-100'
                       }`}
                   >
                     <Icon className="h-4 w-4" />

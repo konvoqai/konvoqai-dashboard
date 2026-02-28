@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
 import {
-  getServerCookie,
   COOKIE_NAMES,
   buildBackendCookieHeader,
+  getServerCookie,
 } from '@/lib/utils/cookies';
+import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3008';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
 
 /**
  * POST /api/onboarding/document

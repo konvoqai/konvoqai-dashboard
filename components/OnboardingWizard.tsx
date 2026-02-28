@@ -1,14 +1,14 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useLogout, useUser } from '@/lib/auth/auth-hooks';
 import { apiClient } from '@/lib/api/axios-instance';
+import { useLogout, useUser } from '@/lib/auth/auth-hooks';
+import { useRouter } from 'next/navigation';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 const defaultWidgetConfig = {
   primaryColor: '#fc0e3f',
@@ -21,7 +21,7 @@ const defaultWidgetConfig = {
   borderRadius: 24,
   fontSize: 14,
 };
-const widgetPreviewURL = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3008'}/widget/preview`;
+const widgetPreviewURL = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/widget/preview`;
 
 interface SourceItem {
   id: string;
@@ -288,9 +288,8 @@ export function OnboardingWizard() {
             <button
               key={item}
               type="button"
-              className={`rounded-full px-4 py-2 text-sm font-medium ${
-                step === item ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'
-              }`}
+              className={`rounded-full px-4 py-2 text-sm font-medium ${step === item ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'
+                }`}
               onClick={() => void goToStep(item as 1 | 2 | 3)}
             >
               Step {item}
@@ -457,13 +456,13 @@ export function OnboardingWizard() {
                 </div>
                 <div className="space-y-2">
                   <Label>Font Size</Label>
-                    <Input
-                      type="number"
-                      value={widgetConfig.fontSize}
-                      onChange={(e) =>
-                        updateWidgetConfig((p) => ({ ...p, fontSize: Number(e.target.value) || 14 }))
-                      }
-                    />
+                  <Input
+                    type="number"
+                    value={widgetConfig.fontSize}
+                    onChange={(e) =>
+                      updateWidgetConfig((p) => ({ ...p, fontSize: Number(e.target.value) || 14 }))
+                    }
+                  />
                 </div>
                 <Button onClick={handleSaveWidget} className="w-full" disabled={isSavingWidget}>
                   {isSavingWidget ? 'Saving...' : 'Save Widget Config'}
