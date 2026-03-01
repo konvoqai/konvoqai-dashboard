@@ -271,7 +271,7 @@ export function OnboardingWizard() {
   const canProceedStep1 = scrapedPagesUsed > 0 || sources.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 p-8">
+    <div className="min-h-screen bg-linear-to-b from-slate-50 to-slate-100 p-8">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
