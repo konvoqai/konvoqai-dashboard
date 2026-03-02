@@ -127,9 +127,9 @@ apiClient.interceptors.response.use(
         console.log('[API Client] Retrying original request after token refresh');
         return apiClient(originalRequest);
       } else {
-        // Token refresh failed — redirect to login
+        // Token refresh failed — redirect to login (only if not already there)
         console.log('[API Client] Token refresh failed, redirecting to login...');
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
           window.location.href = '/login';
         }
         return Promise.reject(error);
