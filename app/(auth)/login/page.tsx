@@ -2,12 +2,18 @@
 
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Bot, Layers3, ShieldCheck } from 'lucide-react';
 import { EmailLoginForm } from '@/components/auth/EmailLoginForm';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 
 const WEBSITE_URL = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'http://localhost:3000';
+
+const proofItems = [
+  'One AI layer across support, docs, and routing',
+  'Setup built for product teams, not services work',
+  'Production-ready controls from day one',
+];
 
 function LoginPageInner() {
   const searchParams = useSearchParams();
@@ -19,322 +25,182 @@ function LoginPageInner() {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>(initialMode);
 
   return (
-    <div
-      style={{
-        minHeight: '100svh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        position: 'relative',
-      }}
-    >
-      {/* Animated card */}
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
-        style={{
-          width: '100%',
-          maxWidth: 420,
-          position: 'relative',
-          background:
-            'linear-gradient(155deg, color-mix(in srgb, var(--surface-2) 88%, transparent) 0%, color-mix(in srgb, var(--surface) 52%, transparent) 100%)',
-          border: '1px solid color-mix(in srgb, var(--border-strong) 65%, transparent)',
-          borderRadius: 'var(--radius-kv-xl)',
-          boxShadow:
-            'var(--shadow-card), 0 0 0 1px rgba(91, 140, 255, 0.08), 0 0 80px rgba(91, 140, 255, 0.06)',
-          backdropFilter: 'blur(24px)',
-          overflow: 'hidden',
-          padding: '32px',
-        }}
-      >
-        {/* Top accent bar */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 2,
-            background: 'var(--grad-btn)',
-          }}
-        />
+    <div className="dashboard-shell min-h-screen">
+      <div className="dashboard-grid-two items-stretch">
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          className="section-frame overflow-hidden px-8 py-10"
+        >
+          <div className="relative z-10 flex h-full flex-col justify-between gap-10">
+            <div className="space-y-8">
+              <div className="dashboard-kicker">
+                <span className="h-2 w-2 rounded-full bg-[var(--accent-raw)]" />
+                Konvoq dashboard
+              </div>
 
-        {/* Top radial glow */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              'radial-gradient(ellipse at top, rgba(91, 140, 255, 0.12), transparent 52%)',
-            pointerEvents: 'none',
-          }}
-        />
+              <div className="space-y-4">
+                <h1 className="dashboard-panel-title max-w-xl">
+                  The same Konvoq product feel, now inside the app.
+                </h1>
+                <p className="dashboard-panel-copy max-w-xl">
+                  Log in to manage onboarding, widget setup, knowledge sources, and performance in one polished SaaS workspace.
+                </p>
+              </div>
 
-        {/* Content */}
-        <div style={{ position: 'relative' }}>
-          {/* Logo */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              marginBottom: 24,
-            }}
-          >
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 10,
-                background: 'var(--grad-btn)',
-                color: '#ffffff',
-                boxShadow: 'var(--shadow-button)',
-                fontSize: 13,
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
-                flexShrink: 0,
-              }}
-            >
-              K
+              <div className="dashboard-grid-three">
+                {[
+                  { icon: Bot, title: 'Support AI', text: 'Train one assistant on your website and docs.' },
+                  { icon: Layers3, title: 'Structured flow', text: 'Move from setup to dashboard without context loss.' },
+                  { icon: ShieldCheck, title: 'Ready to ship', text: 'Designed to look credible in front of real teams.' },
+                ].map((item) => (
+                  <div key={item.title} className="section-surface px-5 py-5">
+                    <item.icon className="mb-4 h-5 w-5 text-[var(--accent-strong)]" />
+                    <div className="mb-2 text-sm font-semibold text-[var(--text-1)]">{item.title}</div>
+                    <p className="m-0 text-sm leading-6 text-[var(--text-2)]">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                {proofItems.map((item) => (
+                  <div key={item} className="dashboard-chip">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-strong)]" />
+                    {item}
+                  </div>
+                ))}
+              </div>
             </div>
-            <span
-              style={{
-                fontSize: 18,
-                fontWeight: 800,
-                letterSpacing: '-0.03em',
-                color: 'var(--foreground-raw)',
-              }}
+
+            <a
+              href={WEBSITE_URL}
+              className="inline-flex w-fit items-center gap-2 text-sm text-[var(--text-2)] no-underline transition-colors hover:text-[var(--text-1)]"
             >
-              Konvoq
-            </span>
+              Back to konvoq.ai
+              <ArrowRight className="h-4 w-4" />
+            </a>
           </div>
+        </motion.section>
 
-          {/* Heading */}
-          <div style={{ marginBottom: 24 }}>
-            <AnimatePresence mode="wait">
-              <motion.h1
-                key={activeTab}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.18 }}
-                style={{
-                  margin: '0 0 6px',
-                  fontSize: 22,
-                  fontWeight: 760,
-                  letterSpacing: '-0.04em',
-                  lineHeight: 1.1,
-                  color: 'var(--foreground-raw)',
-                }}
-              >
-                {activeTab === 'login' ? 'Welcome back' : 'Create your account'}
-              </motion.h1>
-            </AnimatePresence>
-            <p
-              style={{
-                margin: 0,
-                fontSize: 14,
-                color: 'var(--foreground-muted)',
-                lineHeight: 1.6,
-              }}
-            >
-              {activeTab === 'login'
-                ? 'Sign in to continue to your workspace.'
-                : 'Start free — no credit card required.'}
-            </p>
+        <motion.section
+          initial={{ opacity: 0, y: 22 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+          className="section-frame overflow-hidden px-8 py-10"
+        >
+          <div className="relative z-10 mx-auto flex h-full w-full max-w-[440px] flex-col justify-center">
+            <div className="mb-8 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--grad-btn)] text-sm font-extrabold text-[var(--accent-foreground)] shadow-[var(--shadow-button)]">
+                K
+              </div>
+              <div>
+                <div className="text-lg font-extrabold tracking-[-0.03em] text-[var(--text-1)]">
+                  Konvoq
+                </div>
+                <div className="text-sm text-[var(--text-3)]">Dashboard access</div>
+              </div>
+            </div>
 
-            {provider === 'google' && initialStep === 'code' && initialEmail && (
-              <p
-                style={{
-                  margin: '10px 0 0',
-                  fontSize: 13,
-                  color: 'var(--accent-raw)',
-                  lineHeight: 1.5,
-                }}
-              >
-                Google verified. Enter the OTP sent to {initialEmail}.
-              </p>
-            )}
-            {error && (
-              <p
-                style={{
-                  margin: '10px 0 0',
-                  fontSize: 13,
-                  color: 'var(--danger)',
-                  lineHeight: 1.5,
-                }}
-              >
-                Login failed: {error.replaceAll('_', ' ')}
-              </p>
-            )}
-          </div>
-
-          {/* Tab switcher — animated pill */}
-          <div
-            style={{
-              display: 'flex',
-              background: 'color-mix(in srgb, var(--surface-2) 80%, transparent)',
-              border: '1px solid color-mix(in srgb, var(--border) 80%, transparent)',
-              borderRadius: 999,
-              padding: 3,
-              gap: 2,
-              marginBottom: 22,
-            }}
-          >
-            {(['login', 'signup'] as const).map((tab) => {
-              const active = activeTab === tab;
-              return (
-                <motion.button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  whileTap={{ scale: 0.97 }}
-                  style={{
-                    flex: 1,
-                    position: 'relative',
-                    border: 0,
-                    background: 'transparent',
-                    color: active ? 'var(--foreground-raw)' : 'var(--foreground-subtle)',
-                    borderRadius: 999,
-                    padding: '9px 16px',
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    letterSpacing: '-0.01em',
-                    fontFamily: 'inherit',
-                  }}
+            <div className="mb-6">
+              <AnimatePresence mode="wait">
+                <motion.h2
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18 }}
+                  className="m-0 mb-2 text-[30px] font-extrabold tracking-[-0.05em] text-[var(--text-1)]"
                 >
-                  {active && (
-                    <motion.span
-                      layoutId="auth-tab-pill"
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: 999,
-                        background: 'var(--background-elevated)',
-                        border: '1px solid color-mix(in srgb, var(--border-strong) 65%, transparent)',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.18)',
-                      }}
-                      transition={{ type: 'spring', stiffness: 360, damping: 30, mass: 0.7 }}
-                    />
-                  )}
-                  <span style={{ position: 'relative' }}>
-                    {tab === 'login' ? 'Log in' : 'Sign up'}
-                  </span>
-                </motion.button>
-              );
-            })}
-          </div>
+                  {activeTab === 'login' ? 'Welcome back' : 'Create your workspace'}
+                </motion.h2>
+              </AnimatePresence>
+              <p className="m-0 text-sm leading-6 text-[var(--text-2)]">
+                {activeTab === 'login'
+                  ? 'Use email or Google to get back into your Konvoq workspace.'
+                  : 'Start with a secure login, then complete your guided product setup.'}
+              </p>
 
-          {/* Form content */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div style={{ marginBottom: 16 }}>
+              {provider === 'google' && initialStep === 'code' && initialEmail ? (
+                <p className="mt-3 text-sm leading-6 text-[var(--accent-strong)]">
+                  Google verified. Enter the one-time code sent to {initialEmail}.
+                </p>
+              ) : null}
+
+              {error ? (
+                <p className="mt-3 text-sm leading-6 text-red-400">
+                  Login failed: {error.replaceAll('_', ' ')}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="mb-6 flex rounded-full border border-white/10 bg-[color:var(--surface)] p-1">
+              {(['login', 'signup'] as const).map((tab) => {
+                const active = activeTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className="relative flex-1 rounded-full px-4 py-2 text-sm font-semibold"
+                    style={{
+                      color: active ? 'var(--text-1)' : 'var(--text-3)',
+                    }}
+                  >
+                    {active ? (
+                      <motion.span
+                        layoutId="auth-tab-pill"
+                        className="absolute inset-0 rounded-full border border-white/10 bg-[color:var(--background-elevated)] shadow-[var(--shadow-card)]"
+                        transition={{ type: 'spring', stiffness: 360, damping: 30, mass: 0.7 }}
+                      />
+                    ) : null}
+                    <span className="relative z-10">{tab === 'login' ? 'Log in' : 'Sign up'}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-5"
+              >
                 <EmailLoginForm
                   mode={activeTab}
                   initialEmail={initialEmail}
                   initialStep={activeTab === initialMode ? initialStep : 'email'}
                 />
-              </div>
 
-              {/* Divider */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  margin: '18px 0',
-                }}
-              >
-                <div style={{ flex: 1, height: 1, background: 'color-mix(in srgb, var(--border-strong) 60%, transparent)' }} />
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: 'var(--foreground-subtle)',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  or
-                </span>
-                <div style={{ flex: 1, height: 1, background: 'color-mix(in srgb, var(--border-strong) 60%, transparent)' }} />
-              </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-white/8" />
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-3)]">
+                    or
+                  </span>
+                  <div className="h-px flex-1 bg-white/8" />
+                </div>
 
-              <GoogleLoginButton />
-            </motion.div>
-          </AnimatePresence>
+                <GoogleLoginButton />
+              </motion.div>
+            </AnimatePresence>
 
-          {/* Back to website */}
-          <div
-            style={{
-              marginTop: 24,
-              paddingTop: 20,
-              borderTop: '1px solid color-mix(in srgb, var(--border) 70%, transparent)',
-              textAlign: 'center',
-            }}
-          >
-            <a
-              href={WEBSITE_URL}
-              style={{
-                fontSize: 13,
-                color: 'var(--foreground-subtle)',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                transition: 'color 200ms ease',
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.color = 'var(--foreground-muted)';
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.color = 'var(--foreground-subtle)';
-              }}
-            >
-              <span style={{ fontSize: 12 }}>←</span>
-              Back to konvoq.ai
-            </a>
+            <p className="mt-8 text-sm leading-6 text-[var(--text-3)]">
+              By continuing, you agree to our{' '}
+              <a href={`${WEBSITE_URL}/terms`} className="text-[var(--text-2)] underline underline-offset-4">
+                Terms
+              </a>{' '}
+              and{' '}
+              <a href={`${WEBSITE_URL}/privacy`} className="text-[var(--text-2)] underline underline-offset-4">
+                Privacy Policy
+              </a>
+              .
+            </p>
           </div>
-        </div>
-      </motion.div>
-
-      {/* Bottom text */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
-        style={{
-          marginTop: 20,
-          fontSize: 12,
-          color: 'var(--foreground-subtle)',
-          textAlign: 'center',
-          lineHeight: 1.6,
-        }}
-      >
-        By continuing, you agree to our{' '}
-        <a href={`${WEBSITE_URL}/terms`} style={{ color: 'var(--foreground-muted)', textDecoration: 'underline' }}>
-          Terms
-        </a>{' '}
-        and{' '}
-        <a href={`${WEBSITE_URL}/privacy`} style={{ color: 'var(--foreground-muted)', textDecoration: 'underline' }}>
-          Privacy Policy
-        </a>
-        .
-      </motion.p>
+        </motion.section>
+      </div>
     </div>
   );
 }
