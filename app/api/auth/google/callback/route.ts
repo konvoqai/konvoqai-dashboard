@@ -4,7 +4,7 @@ import { backendClient } from '@/lib/api/backend-client';
 /**
  * GET /api/auth/google/callback
  * Handles Google OAuth redirect. Exchanges the code for tokens,
- * fetches user info, requests an OTP, and redirects to login code step.
+ * verifies Google identity with backend, then creates auth session cookies.
  */
 export async function GET(request: NextRequest) {
   const appUrl = request.nextUrl.origin || process.env.APP_URL || 'http://localhost:3001';
@@ -55,26 +55,18 @@ export async function GET(request: NextRequest) {
 
     const tokenData = await tokenRes.json();
 
-    // 2) Fetch user profile from Google.
-    const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: `Bearer ${tokenData.access_token}` },
-    });
-
-    if (!userInfoRes.ok) {
-      throw new Error('Failed to get user info from Google');
+    const idToken: string | undefined = tokenData.id_token;
+    if (!idToken) {
+      throw new Error('Google did not return an id_token');
     }
 
-    const userInfo = await userInfoRes.json();
-    const email: string = userInfo.email;
-    const name: string = userInfo.name || '';
-
-    // 3) Get a CSRF token from backend and request OTP.
+    // 2) Get a CSRF token from backend and verify Google token.
     const csrfRes = await backendClient.get<{ csrfToken: string }>('/api/auth/csrf-token');
     const csrfToken = csrfRes.data.csrfToken;
 
-    await backendClient.post(
+    const verifyRes = await backendClient.post(
       '/api/auth/google/verify',
-      { email, name },
+      { idToken },
       {
         headers: {
           'X-CSRF-Token': csrfToken,
@@ -83,13 +75,19 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // 4) Redirect to login code step with the email pre-filled.
-    const loginUrl = new URL('/login', appUrl);
-    loginUrl.searchParams.set('mode', 'login');
-    loginUrl.searchParams.set('step', 'code');
-    loginUrl.searchParams.set('email', email);
-    loginUrl.searchParams.set('provider', 'google');
-    const redirectResponse = NextResponse.redirect(loginUrl.toString());
+    // 3) Redirect to dashboard after successful session creation.
+    const dashboardUrl = new URL('/dashboard', appUrl);
+    const redirectResponse = NextResponse.redirect(dashboardUrl.toString());
+
+    // Forward backend auth cookies to browser.
+    const setCookieHeaders = verifyRes.headers['set-cookie'];
+    if (setCookieHeaders) {
+      const cookieArray = Array.isArray(setCookieHeaders) ? setCookieHeaders : [setCookieHeaders];
+      cookieArray.forEach((cookie: string) => {
+        redirectResponse.headers.append('Set-Cookie', cookie);
+      });
+    }
+
     // Clear the one-time OAuth cookies
     redirectResponse.cookies.delete('oauth_state');
     redirectResponse.cookies.delete('oauth_code_verifier');

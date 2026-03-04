@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   async headers() {
+    const isDev = process.env.NODE_ENV !== 'production';
+    const scriptSrc = isDev
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+      : "script-src 'self' 'unsafe-inline'";
     return [
       {
         source: '/:path*',
@@ -26,12 +30,13 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              scriptSrc,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
-              "connect-src 'self' https://accounts.google.com",
+              "connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com",
               `frame-src 'self' ${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}`,
+              "frame-ancestors 'none'",
               "object-src 'none'",
               "base-uri 'self'",
             ].join('; '),

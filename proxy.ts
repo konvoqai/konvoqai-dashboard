@@ -1,8 +1,7 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Define route categories
-const PUBLIC_ROUTES = ['/', '/login'];
 const AUTH_ROUTES = ['/login'];
 const PROTECTED_ROUTES = ['/dashboard'];
 

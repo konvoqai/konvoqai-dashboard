@@ -37,8 +37,6 @@ export interface AuthTokens {
 export interface LoginResponse {
   success: boolean;
   user: User;
-  accessToken: string;
-  refreshToken: string;
   message?: string;
 }
 
@@ -68,8 +66,7 @@ export interface GoogleAuthResponse {
 // Token refresh
 export interface RefreshTokenResponse {
   success: boolean;
-  accessToken: string;
-  refreshToken?: string;
+  message?: string;
 }
 
 // API error response

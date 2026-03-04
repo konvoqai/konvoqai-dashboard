@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { backendClient } from '@/lib/api/backend-client';
 import { handleApiError } from '@/lib/utils/error-handler';
 import {
-  getServerCookie,
-  setServerCookie,
   COOKIE_NAMES,
-  ACCESS_TOKEN_MAX_AGE,
-  REFRESH_TOKEN_MAX_AGE,
   buildBackendCookieHeader,
 } from '@/lib/utils/cookies';
 import type { RefreshTokenResponse } from '@/lib/types/auth';
@@ -17,8 +13,7 @@ import type { RefreshTokenResponse } from '@/lib/types/auth';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Get refresh token from cookie
-    const refreshToken = await getServerCookie(COOKIE_NAMES.REFRESH_TOKEN);
+    const refreshToken = request.cookies.get(COOKIE_NAMES.REFRESH_TOKEN)?.value;
 
     if (!refreshToken) {
       return NextResponse.json(
@@ -29,36 +24,34 @@ export async function POST(request: NextRequest) {
 
     const csrfToken = request.headers.get('x-csrf-token');
     // Forward csrf_token cookie so backend double-submit validation passes
-    const cookieHeader = buildBackendCookieHeader(request, ['csrf_token']);
+    const cookieHeader = buildBackendCookieHeader(request, [
+      COOKIE_NAMES.CSRF_TOKEN,
+      COOKIE_NAMES.REFRESH_TOKEN,
+    ]);
 
-    // Send refresh token to backend with CSRF token and cookie
-    const response = await backendClient.post<RefreshTokenResponse>('/api/auth/refresh', {
-      refreshToken,
-    }, {
+    // Refresh using backend cookie-based session.
+    const response = await backendClient.post<RefreshTokenResponse>('/api/auth/refresh', {}, {
       headers: {
         ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
     });
 
-    const { accessToken, refreshToken: newRefreshToken } = response.data;
-
-    // Update access token cookie
-    await setServerCookie(COOKIE_NAMES.ACCESS_TOKEN, accessToken, ACCESS_TOKEN_MAX_AGE);
-
-    // Update refresh token if backend sent a new one
-    if (newRefreshToken) {
-      await setServerCookie(
-        COOKIE_NAMES.REFRESH_TOKEN,
-        newRefreshToken,
-        REFRESH_TOKEN_MAX_AGE
-      );
-    }
-
-    return NextResponse.json({
+    const nextResponse = NextResponse.json({
       success: true,
       message: 'Token refreshed successfully',
     });
+
+    // Forward rotated auth cookies from backend.
+    const setCookieHeaders = response.headers['set-cookie'];
+    if (setCookieHeaders) {
+      const cookieArray = Array.isArray(setCookieHeaders) ? setCookieHeaders : [setCookieHeaders];
+      cookieArray.forEach((cookie: string) => {
+        nextResponse.headers.append('Set-Cookie', cookie);
+      });
+    }
+
+    return nextResponse;
   } catch (error) {
     const authError = handleApiError(error);
     return NextResponse.json(

@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { backendClient } from '@/lib/api/backend-client';
 import { handleApiError } from '@/lib/utils/error-handler';
 import {
-  setServerCookie,
-  COOKIE_NAMES,
-  ACCESS_TOKEN_MAX_AGE,
-  REFRESH_TOKEN_MAX_AGE,
   buildBackendCookieHeader,
 } from '@/lib/utils/cookies';
 import type { LoginResponse } from '@/lib/types/auth';
@@ -29,17 +25,21 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const { accessToken, refreshToken, user } = response.data;
-
-    // Set HttpOnly cookies for tokens
-    await setServerCookie(COOKIE_NAMES.ACCESS_TOKEN, accessToken, ACCESS_TOKEN_MAX_AGE);
-    await setServerCookie(COOKIE_NAMES.REFRESH_TOKEN, refreshToken, REFRESH_TOKEN_MAX_AGE);
-
-    // Return user data (not tokens) to frontend
-    return NextResponse.json({
+    const nextResponse = NextResponse.json({
       success: true,
-      user,
+      user: response.data.user,
     });
+
+    // Forward backend auth cookies to browser.
+    const setCookieHeaders = response.headers['set-cookie'];
+    if (setCookieHeaders) {
+      const cookieArray = Array.isArray(setCookieHeaders) ? setCookieHeaders : [setCookieHeaders];
+      cookieArray.forEach((cookie: string) => {
+        nextResponse.headers.append('Set-Cookie', cookie);
+      });
+    }
+
+    return nextResponse;
   } catch (error) {
     const authError = handleApiError(error);
     return NextResponse.json(
