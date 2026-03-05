@@ -4,7 +4,22 @@ import { Button } from '@/components/ui/button';
 import { useGoogleAuthUrl } from '@/lib/auth/auth-hooks';
 import { toast } from 'sonner';
 
-export function GoogleLoginButton() {
+interface GoogleLoginButtonProps {
+  mode: 'login' | 'signup';
+}
+
+function getErrorMessage(error: unknown): string {
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const response = (error as { response?: { data?: { message?: string } } }).response;
+    const message = response?.data?.message;
+    if (typeof message === 'string' && message.length > 0) {
+      return message;
+    }
+  }
+  return 'Failed to initialize Google login';
+}
+
+export function GoogleLoginButton({ mode }: GoogleLoginButtonProps) {
   const googleAuthMutation = useGoogleAuthUrl();
 
   const handleGoogleLogin = async () => {
@@ -17,8 +32,8 @@ export function GoogleLoginButton() {
       } else {
         toast.error('Failed to get Google login URL');
       }
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to initialize Google login');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     }
   };
 
@@ -26,12 +41,12 @@ export function GoogleLoginButton() {
     <Button
       type="button"
       variant="outline"
-      className="w-full justify-center"
+      className="h-12 w-full justify-center rounded-lg border border-[color:var(--border-strong)] bg-transparent text-base font-semibold text-[var(--text-1)] shadow-none hover:bg-[color:var(--surface)] focus-visible:border-[color:var(--text-1)] focus-visible:ring-black/20 dark:focus-visible:ring-white/20"
       onClick={handleGoogleLogin}
       disabled={googleAuthMutation.isPending}
     >
       <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white">
-        <svg className="h-4 w-4" viewBox="0 0 24 24">
+        <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
             fill="#4285F4"
@@ -50,7 +65,11 @@ export function GoogleLoginButton() {
           />
         </svg>
       </span>
-      {googleAuthMutation.isPending ? 'Loading...' : 'Continue with Google'}
+      {googleAuthMutation.isPending
+        ? 'Loading...'
+        : mode === 'signup'
+          ? 'Sign up with Google'
+          : 'Log in with Google'}
     </Button>
   );
 }

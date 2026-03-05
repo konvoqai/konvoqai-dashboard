@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 // Define route categories
-const AUTH_ROUTES = ['/login'];
+const AUTH_ROUTES = ['/login', '/signup'];
 const PROTECTED_ROUTES = ['/dashboard'];
 
 export function proxy(request: NextRequest) {

@@ -802,3 +802,30 @@ body::after {
     padding: 24px;
   }
 }
+
+.auth-divider-track {
+  position: relative;
+  overflow: hidden;
+  contain: paint;
+}
+
+.auth-divider-core {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in srgb, var(--text-1) 52%, transparent) 12%,
+      color-mix(in srgb, var(--text-1) 70%, transparent) 50%,
+      color-mix(in srgb, var(--text-1) 52%, transparent) 88%,
+      transparent 100%
+    );
+  box-shadow:
+    0 0 10px color-mix(in srgb, var(--text-1) 20%, transparent),
+    0 0 24px color-mix(in srgb, var(--text-1) 12%, transparent);
+}

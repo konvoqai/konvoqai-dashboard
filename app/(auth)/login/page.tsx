@@ -1,205 +1,189 @@
 'use client';
 
-import { Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Bot, Layers3, ShieldCheck } from 'lucide-react';
 import { EmailLoginForm } from '@/components/auth/EmailLoginForm';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 const WEBSITE_URL = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'http://localhost:3000';
+const highlights = [
+  { label: 'Average setup', value: '2 mins' },
+  { label: 'Containment', value: '91%' },
+  { label: 'Availability', value: '24/7' },
+];
 
-const proofItems = [
-  'One AI layer across support, docs, and routing',
-  'Setup built for product teams, not services work',
-  'Production-ready controls from day one',
+const onboardingSteps = [
+  'Connect website and docs in one flow',
+  'Configure widget behavior and tone',
+  'Go live and monitor conversations',
 ];
 
 function LoginPageInner() {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const initialMode = searchParams.get('mode') === 'signup' ? 'signup' : 'login';
+  const mode = pathname === '/signup' || searchParams.get('mode') === 'signup' ? 'signup' : 'login';
   const initialStep = searchParams.get('step') === 'code' ? 'code' : 'email';
   const initialEmail = searchParams.get('email') || '';
   const provider = searchParams.get('provider');
   const error = searchParams.get('error');
-  const [activeTab, setActiveTab] = useState<'login' | 'signup'>(initialMode);
+  const title = mode === 'signup' ? 'Get started for free' : 'Welcome back';
+  const subtitle =
+    mode === 'signup'
+      ? 'Create your Konvoq workspace and launch faster.'
+      : 'Log in to manage onboarding, widgets, and conversations.';
+  const switchHref = mode === 'signup' ? '/login' : '/signup';
+  const switchLead = mode === 'signup' ? 'Already have an account?' : "Don't have an account?";
+  const switchCta = mode === 'signup' ? 'Log in' : 'Sign up';
 
   return (
-    <div className="dashboard-shell min-h-screen">
-      <div className="dashboard-grid-two items-stretch">
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: 'easeOut' }}
-          className="section-frame overflow-hidden px-8 py-10"
-        >
-          <div className="relative z-10 flex h-full flex-col justify-between gap-10">
-            <div className="space-y-8">
-              <div className="dashboard-kicker">
-                <span className="h-2 w-2 rounded-full bg-[var(--accent-raw)]" />
-                Konvoq dashboard
-              </div>
-
-              <div className="space-y-4">
-                <h1 className="dashboard-panel-title max-w-xl">
-                  The same Konvoq product feel, now inside the app.
-                </h1>
-                <p className="dashboard-panel-copy max-w-xl">
-                  Log in to manage onboarding, widget setup, knowledge sources, and performance in one polished SaaS workspace.
-                </p>
-              </div>
-
-              <div className="dashboard-grid-three">
-                {[
-                  { icon: Bot, title: 'Support AI', text: 'Train one assistant on your website and docs.' },
-                  { icon: Layers3, title: 'Structured flow', text: 'Move from setup to dashboard without context loss.' },
-                  { icon: ShieldCheck, title: 'Ready to ship', text: 'Designed to look credible in front of real teams.' },
-                ].map((item) => (
-                  <div key={item.title} className="section-surface px-5 py-5">
-                    <item.icon className="mb-4 h-5 w-5 text-[var(--accent-strong)]" />
-                    <div className="mb-2 text-sm font-semibold text-[var(--text-1)]">{item.title}</div>
-                    <p className="m-0 text-sm leading-6 text-[var(--text-2)]">{item.text}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="space-y-3">
-                {proofItems.map((item) => (
-                  <div key={item} className="dashboard-chip">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-strong)]" />
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <a
-              href={WEBSITE_URL}
-              className="inline-flex w-fit items-center gap-2 text-sm text-[var(--text-2)] no-underline transition-colors hover:text-[var(--text-1)]"
-            >
-              Back to konvoq.ai
-              <ArrowRight className="h-4 w-4" />
-            </a>
+    <div className="flex min-h-screen items-center px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mx-auto w-full max-w-[1180px]">
+        <div className="mb-8 flex items-center justify-between text-sm">
+          <div className="">
+            {/* <Image src="/logo.png" alt="Logo" width={100} height={100} /> */}
           </div>
-        </motion.section>
+          <a href={WEBSITE_URL} className="text-base font-semibold tracking-[-0.02em] text-[var(--text-1)]">Back to konvoqAI</a>
+        </div>
 
-        <motion.section
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
-          className="section-frame overflow-hidden px-8 py-10"
-        >
-          <div className="relative z-10 mx-auto flex h-full w-full max-w-[440px] flex-col justify-center">
-            <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--grad-btn)] text-sm font-extrabold text-[var(--accent-foreground)] shadow-[var(--shadow-button)]">
-                K
-              </div>
-              <div>
-                <div className="text-lg font-extrabold tracking-[-0.03em] text-[var(--text-1)]">
-                  Konvoq
-                </div>
-                <div className="text-sm text-[var(--text-3)]">Dashboard access</div>
-              </div>
-            </div>
+        <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_auto_0.85fr] lg:gap-10">
+          <motion.section
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+          >
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-3)]">
+              Konvoq dashboard
+            </p>
+            <h1 className="m-0 max-w-[720px] text-4xl font-extrabold tracking-[-0.05em] text-[var(--text-1)] sm:text-5xl lg:text-6xl">
+              {title}
+            </h1>
+            <p className="mt-5 max-w-[620px] text-base leading-7 text-[var(--text-2)] sm:text-lg">
+              {subtitle}
+            </p>
 
-            <div className="mb-6">
-              <AnimatePresence mode="wait">
-                <motion.h2
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.18 }}
-                  className="m-0 mb-2 text-[30px] font-extrabold tracking-[-0.05em] text-[var(--text-1)]"
+            <div className="mt-8 grid max-w-[640px] gap-3 sm:grid-cols-3">
+              {highlights.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-lg border px-4 py-3"
+                  style={{
+                    borderColor: 'color-mix(in srgb, var(--border-strong) 70%, transparent)',
+                    background: 'color-mix(in srgb, var(--surface) 56%, transparent)',
+                  }}
                 >
-                  {activeTab === 'login' ? 'Welcome back' : 'Create your workspace'}
-                </motion.h2>
-              </AnimatePresence>
-              <p className="m-0 text-sm leading-6 text-[var(--text-2)]">
-                {activeTab === 'login'
-                  ? 'Use email or Google to get back into your Konvoq workspace.'
-                  : 'Start with a secure login, then complete your guided product setup.'}
-              </p>
-
-              {provider === 'google' && initialStep === 'code' && initialEmail ? (
-                <p className="mt-3 text-sm leading-6 text-[var(--accent-strong)]">
-                  Google verified. Enter the one-time code sent to {initialEmail}.
-                </p>
-              ) : null}
-
-              {error ? (
-                <p className="mt-3 text-sm leading-6 text-red-400">
-                  Login failed: {error.replaceAll('_', ' ')}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="mb-6 flex rounded-full border border-white/10 bg-[color:var(--surface)] p-1">
-              {(['login', 'signup'] as const).map((tab) => {
-                const active = activeTab === tab;
-                return (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setActiveTab(tab)}
-                    className="relative flex-1 rounded-full px-4 py-2 text-sm font-semibold"
-                    style={{
-                      color: active ? 'var(--text-1)' : 'var(--text-3)',
-                    }}
-                  >
-                    {active ? (
-                      <motion.span
-                        layoutId="auth-tab-pill"
-                        className="absolute inset-0 rounded-full border border-white/10 bg-[color:var(--background-elevated)] shadow-[var(--shadow-card)]"
-                        transition={{ type: 'spring', stiffness: 360, damping: 30, mass: 0.7 }}
-                      />
-                    ) : null}
-                    <span className="relative z-10">{tab === 'login' ? 'Log in' : 'Sign up'}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-5"
-              >
-                <EmailLoginForm
-                  mode={activeTab}
-                  initialEmail={initialEmail}
-                  initialStep={activeTab === initialMode ? initialStep : 'email'}
-                />
-
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 bg-white/8" />
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-3)]">
-                    or
-                  </span>
-                  <div className="h-px flex-1 bg-white/8" />
+                  <p className="text-xs uppercase tracking-[0.1em] text-[var(--text-3)]">{item.label}</p>
+                  <p className="mt-1 text-lg font-bold tracking-[-0.02em] text-[var(--text-1)]">{item.value}</p>
                 </div>
+              ))}
+            </div>
 
-                <GoogleLoginButton />
-              </motion.div>
-            </AnimatePresence>
+            <div className="mt-8 grid max-w-[640px] gap-3 sm:grid-cols-2">
+              {[
+                'Train on website and docs',
+                'One assistant for support and sales',
+                'Fast setup with production controls',
+                'Built for teams that ship quickly',
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-lg border px-4 py-3 text-sm"
+                  style={{
+                    borderColor: 'color-mix(in srgb, var(--border-strong) 70%, transparent)',
+                    color: 'var(--text-2)',
+                    background: 'color-mix(in srgb, var(--surface) 56%, transparent)',
+                  }}
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
 
-            <p className="mt-8 text-sm leading-6 text-[var(--text-3)]">
-              By continuing, you agree to our{' '}
-              <a href={`${WEBSITE_URL}/terms`} className="text-[var(--text-2)] underline underline-offset-4">
-                Terms
+            <div className="mt-8 max-w-[640px] border-l pl-4" style={{ borderColor: 'color-mix(in srgb, var(--border-strong) 70%, transparent)' }}>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-3)]">
+                First hour checklist
+              </p>
+              <div className="space-y-3">
+                {onboardingSteps.map((step, index) => (
+                  <div key={step} className="flex items-start gap-3">
+                    <span
+                      className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold"
+                      style={{
+                        borderColor: 'color-mix(in srgb, var(--border-strong) 70%, transparent)',
+                        color: 'var(--text-1)',
+                        background: 'color-mix(in srgb, var(--surface-2) 72%, transparent)',
+                      }}
+                    >
+                      {index + 1}
+                    </span>
+                    <p className="text-sm leading-6 text-[var(--text-2)]">{step}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.section>
+
+          <div
+            aria-hidden
+            className="auth-divider-track hidden h-[min(70vh,560px)] w-6 justify-self-center lg:block"
+          >
+            <div className="auth-divider-core" />
+          </div>
+
+          <motion.section
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.05, ease: 'easeOut' }}
+            className="w-full max-w-[460px] lg:justify-self-center"
+          >
+            {provider === 'google' && initialStep === 'code' && initialEmail ? (
+              <p className="mb-4 text-sm text-[var(--text-2)]">
+                Google verified. Enter the one-time code sent to {initialEmail}.
+              </p>
+            ) : null}
+
+            {error ? (
+              <p className="mb-4 text-sm text-red-400">
+                Login failed: {error.replaceAll('_', ' ')}
+              </p>
+            ) : null}
+
+            <div className="space-y-4">
+              <GoogleLoginButton mode={mode} />
+            </div>
+
+            <div className="my-8 flex items-center gap-4">
+              <div className="h-px flex-1 bg-[color:var(--border-strong)]" />
+              <span className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--text-3)]">or</span>
+              <div className="h-px flex-1 bg-[color:var(--border-strong)]" />
+            </div>
+
+            <EmailLoginForm
+              mode={mode}
+              initialEmail={initialEmail}
+              initialStep={initialStep}
+            />
+
+            <p className="mt-8 text-center text-sm text-[var(--text-2)] sm:text-base">
+              {switchLead}{' '}
+              <Link href={switchHref} className="text-[var(--text-1)] no-underline hover:underline">
+                {switchCta}
+              </Link>
+            </p>
+
+            <p className="mt-7 text-center text-sm leading-6 text-[var(--text-3)]">
+              You agree to our{' '}
+              <a href={`${WEBSITE_URL}/terms`} className="text-[var(--text-1)] no-underline hover:underline">
+                Terms of Use
               </a>{' '}
               and{' '}
-              <a href={`${WEBSITE_URL}/privacy`} className="text-[var(--text-2)] underline underline-offset-4">
+              <a href={`${WEBSITE_URL}/privacy`} className="text-[var(--text-1)] no-underline hover:underline">
                 Privacy Policy
               </a>
-              .
             </p>
-          </div>
-        </motion.section>
+          </motion.section>
+        </div>
       </div>
     </div>
   );
