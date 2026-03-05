@@ -28,6 +28,9 @@ function LoginPageInner() {
   const initialEmail = searchParams.get('email') || '';
   const provider = searchParams.get('provider');
   const error = searchParams.get('error');
+  const redirectParam = searchParams.get('redirect');
+  const redirectTo =
+    redirectParam && redirectParam.startsWith('/') ? redirectParam : '/dashboard';
   const title = mode === 'signup' ? 'Get started for free' : 'Welcome back';
   const subtitle =
     mode === 'signup'
@@ -163,6 +166,7 @@ function LoginPageInner() {
               mode={mode}
               initialEmail={initialEmail}
               initialStep={initialStep}
+              redirectTo={redirectTo}
             />
 
             <p className="mt-8 text-center text-sm text-[var(--text-2)] sm:text-base">

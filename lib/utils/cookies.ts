@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 
 // Cookie names matching backend
 export const COOKIE_NAMES = {
-  ACCESS_TOKEN: 'witzo_access_token',
+  ACCESS_TOKEN: 'konvoq_access_token',
   REFRESH_TOKEN: 'witzo_refresh_token',
   CSRF_TOKEN: 'csrf_token',
 } as const;

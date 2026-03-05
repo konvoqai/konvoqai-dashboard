@@ -4,6 +4,7 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, clearCsrfToken } from '@/lib/api/axios-instance';
 import type { User, UserProfileResponse } from '@/lib/types/auth';
+import { usePathname } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -22,6 +23,11 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const queryClient = useQueryClient();
+  const pathname = usePathname();
+  const isAuthPage =
+    pathname?.startsWith('/login') ||
+    pathname?.startsWith('/signup') ||
+    pathname?.startsWith('/auth/callback');
 
   // Fetch current user from /api/auth/me
   const {
@@ -37,7 +43,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return response.data.user;
         }
         return null;
-      } catch (error) {
+      } catch {
         // User not authenticated or error fetching user
         return null;
       }
@@ -45,6 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     retry: false, // Don't retry on 401
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: true, // Refetch when window gains focus
+    enabled: !isAuthPage,
   });
 
   const isAuthenticated = !!user;
@@ -90,7 +97,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value: AuthContextType = {
     user: user ?? null,
-    isLoading,
+    isLoading: !isAuthPage && isLoading,
     isAuthenticated,
     login,
     logout,

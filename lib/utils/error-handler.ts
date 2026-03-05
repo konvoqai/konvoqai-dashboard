@@ -114,19 +114,6 @@ export function isForbiddenError(error: unknown): boolean {
 }
 
 /**
- * Checks if error is a rate limit error (429)
- */
-export function isRateLimitError(error: unknown): boolean {
-  if (error instanceof AuthError) {
-    return error.statusCode === 429;
-  }
-  if (error instanceof AxiosError) {
-    return error.response?.status === 429;
-  }
-  return false;
-}
-
-/**
  * Gets validation errors from API error response
  */
 export function getValidationErrors(error: unknown): Record<string, string[]> | undefined {

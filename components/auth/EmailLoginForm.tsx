@@ -1,24 +1,26 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useRequestEmailCode, useLogin } from '@/lib/auth/auth-hooks';
+import { useLogin, useRequestEmailCode } from '@/lib/auth/auth-hooks';
+import { ArrowLeft, MailOpen } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface EmailLoginFormProps {
   mode: 'login' | 'signup';
   initialEmail?: string;
   initialStep?: 'email' | 'code';
+  redirectTo?: string;
 }
 
 export function EmailLoginForm({
   mode,
   initialEmail = '',
   initialStep = 'email',
+  redirectTo = '/dashboard',
 }: EmailLoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState(initialEmail);
@@ -69,7 +71,7 @@ export function EmailLoginForm({
     try {
       await loginMutation.mutateAsync({ email, code });
       toast.success(mode === 'login' ? 'Logged in successfully' : 'Account created successfully');
-      router.push('/dashboard');
+      router.replace(redirectTo);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Invalid verification code'));
     }
@@ -80,19 +82,24 @@ export function EmailLoginForm({
     setCode('');
   };
 
+  const handleOpenGmail = () => {
+    window.open('https://mail.google.com/mail/u/0/#inbox', '_blank', 'noopener,noreferrer');
+  };
+
   if (step === 'code') {
     return (
-      <form onSubmit={handleVerifyCode} className="space-y-5">
+      <form onSubmit={handleVerifyCode} className="space-y-4">
         <div
-          className="inline-flex w-fit items-center gap-2 rounded-lg border px-4 py-2 text-sm"
+          className="rounded-lg border px-4 py-3"
           style={{
             borderColor: 'color-mix(in srgb, var(--border-strong) 70%, transparent)',
-            color: 'var(--text-2)',
-            background: 'transparent',
+            background: 'color-mix(in srgb, var(--surface) 60%, transparent)',
           }}
         >
-          <ShieldCheck className="h-3.5 w-3.5 text-[var(--text-2)]" />
-          Verification code sent
+          <p className="text-sm font-semibold text-[var(--text-1)]">Verification code sent</p>
+          <p className="mt-1 text-sm text-[var(--text-2)]">
+            Enter the 6-digit code sent to <span className="font-medium text-[var(--text-1)]">{email}</span>.
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -112,9 +119,6 @@ export function EmailLoginForm({
             autoFocus
             className="h-12 rounded-lg border-[color:var(--border-strong)] bg-transparent text-center text-base tracking-[0.3em] text-[var(--text-1)] shadow-none focus-visible:border-[color:var(--text-1)] focus-visible:ring-black/20 dark:focus-visible:ring-white/20"
           />
-          <p className="text-sm text-[var(--text-2)]">
-            Enter the code we sent to <span className="font-medium text-[var(--text-1)]">{email}</span>.
-          </p>
         </div>
 
         <div className="space-y-3">
@@ -125,15 +129,26 @@ export function EmailLoginForm({
           >
             {loginMutation.isPending ? 'Verifying...' : 'Verify code'}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 w-full rounded-lg bg-transparent shadow-none"
-            onClick={handleBackToEmail}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to email
-          </Button>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full rounded-lg bg-transparent shadow-none"
+              onClick={handleOpenGmail}
+            >
+              <MailOpen className="h-4 w-4" />
+              Open Gmail
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full rounded-lg bg-transparent shadow-none"
+              onClick={handleBackToEmail}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to email
+            </Button>
+          </div>
         </div>
       </form>
     );

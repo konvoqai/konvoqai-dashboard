@@ -9,7 +9,9 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Get access token from cookies
-  const accessToken = request.cookies.get('witzo_access_token')?.value;
+  const accessToken =
+    request.cookies.get('konvoq_access_token')?.value ||
+    request.cookies.get('witzo_access_token')?.value;
   const isAuthenticated = !!accessToken;
 
   // Check if the current path is a protected route

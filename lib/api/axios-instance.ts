@@ -1,5 +1,14 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
+const API_DEBUG =
+  process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_API_DEBUG === 'true';
+
+function debugLog(...args: unknown[]) {
+  if (API_DEBUG) {
+    console.log(...args);
+  }
+}
+
 // CSRF token cache
 let csrfToken: string | null = null;
 let isFetchingCsrf = false;
@@ -60,10 +69,10 @@ async function refreshAccessToken(): Promise<boolean> {
   refreshPromise = (async () => {
     try {
       await apiClient.post('/auth/refresh');
-      console.log('[API Client] Token refresh successful');
+      debugLog('[API Client] Token refresh successful');
       return true;
     } catch (error) {
-      console.error('[API Client] Token refresh failed:', error);
+      debugLog('[API Client] Token refresh failed:', error);
       return false;
     } finally {
       isRefreshing = false;
@@ -77,9 +86,7 @@ async function refreshAccessToken(): Promise<boolean> {
 // Request interceptor: attach CSRF token for mutating requests
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[API Client] ${config.method?.toUpperCase()} ${config.url}`);
-    }
+    debugLog(`[API Client] ${config.method?.toUpperCase()} ${config.url}`);
 
     const method = config.method?.toLowerCase();
     if (method && ['post', 'put', 'patch', 'delete'].includes(method)) {
@@ -92,7 +99,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error('[API Client] Request error:', error);
+    debugLog('[API Client] Request error:', error);
     return Promise.reject(error);
   }
 );
@@ -105,30 +112,37 @@ apiClient.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const isAuthMeRequest = originalRequest.url?.includes('/auth/me');
+    const isPublicAuthRoute =
+      typeof window !== 'undefined' &&
+      (window.location.pathname.startsWith('/login') ||
+        window.location.pathname.startsWith('/signup'));
+    const shouldSilenceAuthMe401 =
+      error.response?.status === 401 && isAuthMeRequest && isPublicAuthRoute;
 
     // If error is 401 and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !shouldSilenceAuthMe401) {
       // Don't retry the refresh endpoint itself
       if (originalRequest.url?.includes('/auth/refresh')) {
-        console.log('[API Client] Refresh token expired or invalid');
+        debugLog('[API Client] Refresh token expired or invalid');
         return Promise.reject(error);
       }
 
       // Mark that we've retried this request
       originalRequest._retry = true;
 
-      console.log('[API Client] Got 401, attempting token refresh...');
+      debugLog('[API Client] Got 401, attempting token refresh...');
 
       // Try to refresh the token
       const refreshed = await refreshAccessToken();
 
       if (refreshed) {
         // Token refreshed successfully, retry the original request
-        console.log('[API Client] Retrying original request after token refresh');
+        debugLog('[API Client] Retrying original request after token refresh');
         return apiClient(originalRequest);
       } else {
         // Token refresh failed — redirect to login (only if not already there)
-        console.log('[API Client] Token refresh failed, redirecting to login...');
+        debugLog('[API Client] Token refresh failed, redirecting to login...');
         if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
           window.location.href = '/login';
         }
@@ -136,10 +150,25 @@ apiClient.interceptors.response.use(
       }
     }
 
+    if (shouldSilenceAuthMe401) {
+      return Promise.reject(error);
+    }
+
     // For other errors or if retry already happened, just reject
     if (error.response) {
+      const status = error.response.status;
+      if (status === 401) {
+        return Promise.reject(error);
+      }
+      if (status >= 400 && status < 500) {
+        debugLog(
+          `[API Client] Client error ${status}:`,
+          error.response.data || error.message
+        );
+        return Promise.reject(error);
+      }
       console.error(
-        `[API Client] Error ${error.response.status}:`,
+        `[API Client] Error ${status}:`,
         error.response.data || error.message
       );
     } else if (error.request) {

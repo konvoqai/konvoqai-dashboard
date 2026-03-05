@@ -27,7 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${manrope.variable} ${ibmPlexMono.variable} antialiased`}>
+      <body
+        suppressHydrationWarning
+        className={`${manrope.variable} ${ibmPlexMono.variable} antialiased`}
+      >
         <Providers>
           {children}
           <Toaster />
