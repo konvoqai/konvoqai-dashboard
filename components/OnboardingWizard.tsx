@@ -13,8 +13,12 @@ import {
   Circle,
   Code2,
   Copy,
+  FileText,
+  Globe,
+  Loader2,
   LogOut,
   Sparkles,
+  Upload,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
@@ -578,14 +582,24 @@ export function OnboardingWizard() {
               const isActive = step === stepId;
               const isDone =
                 step > stepId || (stepId === 1 && canProceedStep1 && step > 1) || (stepId === 2 && widgetSaved && step === 3);
+              // determine connecting line state
+              const prevIsDone =
+                index === 0
+                  ? false
+                  : step > index || (index === 1 && canProceedStep1 && step > 1) || (index === 2 && widgetSaved && step === 3);
+              const lineClass = index < steps.length - 1
+                ? isActive || isDone ? 'line-active' : prevIsDone ? 'line-done' : ''
+                : '';
               return (
-                <div key={item.id} className="onboarding-setup-progress-wrap">
+                <div key={item.id} className={`onboarding-setup-progress-wrap ${lineClass}`}>
                   <button
                     type="button"
                     onClick={() => void goToStep(stepId)}
                     className={`onboarding-setup-progress-step ${isActive ? 'is-active' : ''} ${isDone ? 'is-done' : ''}`}
                   >
-                    <span className="onboarding-setup-progress-index">{item.id}</span>
+                    <span className="onboarding-setup-progress-index">
+                      {isDone ? <Check className="h-2.5 w-2.5" /> : item.id}
+                    </span>
                     <span>{shortStepTitle[stepId]}</span>
                   </button>
                   {index < steps.length - 1 ? <span className="onboarding-setup-progress-line" aria-hidden /> : null}
@@ -614,60 +628,120 @@ export function OnboardingWizard() {
 
             <div className={`onboarding-setup-left-body ${step === 3 ? 'is-launch-step' : ''}`}>
 
-              {/* Step 1 */}
+              {/* Step 1 — redesigned */}
               {step === 1 ? (
-                <div className="onboarding-setup-stack onboarding-setup-stack-launch">
-                  <form onSubmit={handleAddUrl} className="onboarding-setup-stack">
-                    <div className="space-y-2">
-                      <Label htmlFor="source-url" className="text-sm font-semibold text-(--text-2)">
-                        Website URL
-                      </Label>
-                      <Input
-                        id="source-url"
-                        type="url"
-                        placeholder="https://example.com"
-                        value={hasPipelineData || hasActiveJob ? (sources[0]?.url || url) : url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        disabled={hasPipelineData || hasActiveJob}
-                        readOnly={hasPipelineData || hasActiveJob}
-                      />
-                    </div>
-                    <Button type="submit" disabled={isSaving || hasPipelineData || hasActiveJob} className="w-full sm:w-auto">
-                      {isSaving ? 'Starting scrape...' : 'Start training'}
-                    </Button>
-                  </form>
+                <div className="ob-train-step">
 
-                  <div className="onboarding-setup-mini-status">
-                    <span className="capitalize text-(--text-2)">Status: {jobStatus}</span>
-                    <span className="text-(--text-3)">{pipelineProgress}%</span>
+                  {/* ── URL source section ── */}
+                  <div className="ob-train-section">
+                    <div className="ob-train-section-label">
+                      <span className="ob-train-step-badge">1</span>
+                      <span>Enter your website URL</span>
+                    </div>
+
+                    <form onSubmit={handleAddUrl} className="ob-train-url-form">
+                      <div className="ob-train-url-input-wrap">
+                        <Globe className="ob-train-url-icon h-4 w-4" />
+                        <Input
+                          id="source-url"
+                          type="url"
+                          placeholder="https://yourwebsite.com"
+                          value={hasPipelineData || hasActiveJob ? (sources[0]?.url || url) : url}
+                          onChange={(e) => setUrl(e.target.value)}
+                          disabled={hasPipelineData || hasActiveJob}
+                          readOnly={hasPipelineData || hasActiveJob}
+                          className="ob-train-url-input"
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={isSaving || hasPipelineData || hasActiveJob}
+                        className="ob-train-primary-btn w-full"
+                      >
+                        {isSaving ? (
+                          <><Loader2 className="h-4 w-4 animate-spin" />Starting scrape...</>
+                        ) : hasPipelineData ? (
+                          <><Check className="h-4 w-4" />Website added</>
+                        ) : (
+                          <><Sparkles className="h-4 w-4" />Start training</>
+                        )}
+                      </Button>
+                    </form>
+
+                    {/* Status pill — only when not idle */}
+                    {normalizedJobStatus !== 'idle' && (
+                      <div className={`ob-train-status-pill ob-train-status-${normalizedJobStatus}`}>
+                        {(isScrapingState || isIndexingState) ? (
+                          <span className="ob-train-status-dot" />
+                        ) : pipelineStage === 'done' ? (
+                          <Check className="h-3 w-3" />
+                        ) : isFailedState ? (
+                          <AlertTriangle className="h-3 w-3" />
+                        ) : null}
+                        <span className="capitalize">{jobStatus}</span>
+                        {pipelineProgress > 0 && pipelineStage !== 'done' && (
+                          <span className="ob-train-status-pct">{pipelineProgress}%</span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="onboarding-setup-divider" />
+                  {/* ── Divider ── */}
+                  <div className="ob-train-or-divider"><span>or upload a document</span></div>
 
-                  <form onSubmit={handleUploadDocument} className="onboarding-setup-stack">
-                    <div className="flex items-center justify-between gap-3">
-                      <Label htmlFor="doc-upload" className="text-sm font-semibold text-(--text-2)">
-                        Optional docs upload
-                      </Label>
-                      <span className="text-xs text-(--text-3)">
-                        {docsUsed}/{planLimits.documents} docs
-                      </span>
+                  {/* ── Doc upload section ── */}
+                  <div className="ob-train-section">
+                    <div className="ob-train-section-label">
+                      <span className="ob-train-step-badge ob-train-step-badge--2">2</span>
+                      <span>Upload a document</span>
+                      <span className="ob-train-doc-count">{docsUsed}/{planLimits.documents} docs used</span>
                     </div>
-                    <Input
-                      id="doc-upload"
-                      type="file"
-                      accept=".txt,.csv,text/plain,text/csv"
-                      onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
-                    />
-                    <Button type="submit" variant="outline" disabled={isUploading} className="w-full sm:w-auto">
-                      {isUploading ? 'Uploading...' : 'Upload document'}
-                    </Button>
-                  </form>
 
-                  <div className="onboarding-setup-meta">
-                    <span>{scrapedPagesUsed}/{planLimits.scrapedPages} pages connected</span>
-                    <span>{sources.length} source{sources.length === 1 ? '' : 's'}</span>
+                    <form onSubmit={handleUploadDocument}>
+                      <label htmlFor="doc-upload" className={`ob-train-dropzone${documentFile ? ' ob-train-dropzone--selected' : ''}`}>
+                        <FileText className="ob-train-dropzone-icon h-6 w-6" />
+                        <div className="ob-train-dropzone-text">
+                          <span>{documentFile ? documentFile.name : 'Drop .txt or .csv here'}</span>
+                          <span>{documentFile ? `${(documentFile.size / 1024).toFixed(1)} KB · ready to upload` : 'or click to browse'}</span>
+                        </div>
+                        {documentFile && <Check className="ob-train-dropzone-check h-4 w-4" />}
+                        <input
+                          id="doc-upload"
+                          type="file"
+                          accept=".txt,.csv,text/plain,text/csv"
+                          onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
+                          className="sr-only"
+                        />
+                      </label>
+
+                      <Button
+                        type="submit"
+                        variant="outline"
+                        disabled={isUploading || !documentFile}
+                        className="ob-train-upload-btn w-full mt-3"
+                      >
+                        {isUploading ? (
+                          <><Loader2 className="h-4 w-4 animate-spin" />Uploading...</>
+                        ) : (
+                          <><Upload className="h-4 w-4" />Upload document</>
+                        )}
+                      </Button>
+                    </form>
                   </div>
+
+                  {/* ── Meta chips ── */}
+                  {(scrapedPagesUsed > 0 || sources.length > 0) && (
+                    <div className="ob-train-meta">
+                      <div className="ob-train-meta-chip">
+                        <Check className="h-3 w-3" />
+                        <span>{scrapedPagesUsed}/{planLimits.scrapedPages} pages indexed</span>
+                      </div>
+                      <div className="ob-train-meta-chip">
+                        <Circle className="h-3 w-3" />
+                        <span>{sources.length} source{sources.length === 1 ? '' : 's'}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : null}
 
@@ -841,7 +915,8 @@ export function OnboardingWizard() {
             <aside className="onboarding-setup-right onboarding-setup-right--preview section-surface">
               <div className="ob-preview-head">
                 <span>Live preview</span>
-                <span className="ob-preview-hint">Updates as you edit</span>
+                <div className="ob-preview-url-bar">yoursite.com</div>
+                <span className="ob-preview-hint">Live</span>
               </div>
               <div className="ob-preview-frame">
                 <iframe
