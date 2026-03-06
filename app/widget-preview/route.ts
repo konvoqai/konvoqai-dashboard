@@ -16,7 +16,7 @@ export async function GET() {
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
       html, body {
         width: 100%; height: 100%;
-        background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        background: linear-gradient(180deg, #747678 0%, #7a7b7e 100%);
         overflow: hidden;
       }
     </style>

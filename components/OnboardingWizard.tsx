@@ -84,6 +84,101 @@ const steps = [
   },
 ];
 
+const installTips: Record<string, string[]> = {
+  HTML: [
+    'Open your index.html or global template file.',
+    'Scroll to the very bottom of the file.',
+    'Paste the Konvoq script tag right before the closing </body> tag.',
+    'Save and refresh your browser to see the widget.',
+  ],
+  WordPress: [
+    'Log in to your WordPress Admin Dashboard.',
+    'Go to Appearance > Theme File Editor.',
+    'Locate the footer.php file in the right sidebar.',
+    'Paste the Konvoq script tag just before the </body> tag.',
+    'Click "Update File" and visit your site.',
+  ],
+  Shopify: [
+    'Go to Online Store > Themes in your Shopify admin.',
+    'Click the "..." button and select "Edit code".',
+    'Open the theme.liquid file under the Layout folder.',
+    'Paste the Konvoq script before the closing </body> tag.',
+    'Click "Save" to push the changes live.',
+  ],
+  Webflow: [
+    'Open your Project Settings in Webflow.',
+    'Navigate to the "Custom Code" tab.',
+    'Paste the Konvoq code in the "Footer Code" section.',
+    'Save changes and publish your site to the selected domains.',
+  ],
+  Squarespace: [
+    'Go to Settings > Advanced > Code Injection.',
+    'Paste the Konvoq script into the "Footer" text area.',
+    'Click "Save" at the top left of the panel.',
+  ],
+  Wix: [
+    'Go to Settings in your site\'s dashboard.',
+    'Select "Custom Code" under the Advanced section.',
+    'Click "+ Add Custom Code" at the top right.',
+    'Paste the Konvoq script and set "Place Code in" to "Body - end".',
+    'Click "Apply" to save.',
+  ],
+  'Next.js': [
+    'Import the "next/script" component in your Root Layout (layout.tsx).',
+    'Add the Konvoq script using <Script src="..." strategy="lazyOnload" />.',
+    'Ensure the ID matches the one provided in the snippet.',
+  ],
+  React: [
+    'Open your index.html in the public/ folder.',
+    'Paste the script tag before the </body> tag.',
+    'Alternatively, use a hook to inject the script dynamically in App.tsx.',
+  ],
+  Framer: [
+    'Open your Site Settings in Framer.',
+    'Navigate to the "General" or "Custom Code" tab.',
+    'Paste the script into the "End of <body> tag" section.',
+    'Publish your site to apply changes.',
+  ],
+  GoDaddy: [
+    'Open your Website Builder editor.',
+    'Click on "Settings" and then "Google Analytics/Facebook Pixel".',
+    'Paste the Konvoq script into the "Header Code" or use a HTML sections.',
+    'We recommend adding a "HTML" section at the bottom of the page.',
+  ],
+  Ghost: [
+    'Go to Settings > Code Injection.',
+    'Paste the Konvoq script into the "Site Footer" box.',
+    'Click "Save" at the top of the page.',
+  ],
+  WooCommerce: [
+    'Similar to WordPress, go to Appearance > Theme File Editor.',
+    'Edit the footer.php file of your active theme.',
+    'Paste the script before the </body> tag.',
+  ],
+  'Google Sites': [
+    'Open your site in Google Sites editor.',
+    'On the right panel, click "Embed".',
+    'Select "Embed Code" and paste the Konvoq script.',
+    'Drag the embedded block to the bottom of your page.',
+  ],
+  Weebly: [
+    'Go to Settings > SEO in your Weebly editor.',
+    'Paste the Konvoq script into the "Footer Code" section.',
+    'Click "Save" and then "Publish" your site.',
+  ],
+  Blogger: [
+    'In your Blogger dashboard, go to Theme.',
+    'Click the arrow next to "Customize" and select "Edit HTML".',
+    'Search for </body> and paste the script right above it.',
+    'Click the Save icon (diskette) at the top right.',
+  ],
+  Tumblr: [
+    'Go to "Edit Appearance" and click "Edit Theme".',
+    'Click "Edit HTML" at the top of the left sidebar.',
+    'Search for </body> and paste the script before it.',
+    'Click "Update Preview" and then "Save".',
+  ],
+};
 const platformList: PlatformItem[] = [
   { name: 'HTML', color: '#e34c26', logo: 'https://cdn.simpleicons.org/html5/e34c26', abbr: 'HT' },
   { name: 'WordPress', color: '#21759b', logo: 'https://cdn.simpleicons.org/wordpress/21759b', abbr: 'WP' },
@@ -99,7 +194,7 @@ const platformList: PlatformItem[] = [
   { name: 'WooCommerce', color: '#9b59b6', logo: 'https://cdn.simpleicons.org/woocommerce/9b59b6', abbr: 'WC' },
   { name: 'Google Sites', color: '#4285f4', logo: 'https://www.google.com/s2/favicons?domain=sites.google.com&sz=64', abbr: 'GS' },
   { name: 'Weebly', color: '#f36c20', logo: 'https://www.google.com/s2/favicons?domain=weebly.com&sz=64', abbr: 'WB' },
-  { name: 'Blogger', color: '#f57d00', logo: 'https://cdn.simpleicons.org/blogger/f57d00', abbr: 'BL' },
+  // { name: 'Blogger', color: '#f57d00', logo: 'https://cdn.simpleicons.org/blogger/f57d00', abbr: 'BL' },
   { name: 'Tumblr', color: '#35a0dc', logo: 'https://cdn.simpleicons.org/tumblr/35a0dc', abbr: 'TB' },
 ];
 
@@ -446,88 +541,7 @@ export function OnboardingWizard() {
     failed: 'Pipeline encountered an issue',
   };
   const shortStepTitle: Record<1 | 2 | 3, string> = { 1: 'Train', 2: 'Style', 3: 'Launch' };
-  const installTips: Record<string, string[]> = {
-    HTML: [
-      'Open your main HTML file (for example index.html).',
-      'Paste the script right before the closing body tag.',
-      'Save and deploy your site, then refresh to verify widget load.',
-    ],
-    WordPress: [
-      'Go to Appearance > Theme File Editor or a header/footer script plugin.',
-      'Paste the script inside footer.php before the closing body tag.',
-      'Save changes and clear cache plugin/CDN cache.',
-    ],
-    Shopify: [
-      'Open Online Store > Themes > Edit code.',
-      'In layout/theme.liquid, paste script before the closing body tag.',
-      'Save, publish, and test on storefront pages.',
-    ],
-    Webflow: [
-      'Open Project Settings > Custom Code.',
-      'Paste script in Footer Code section and save.',
-      'Publish site and verify widget is visible.',
-    ],
-    Squarespace: [
-      'Open Settings > Advanced > Code Injection.',
-      'Paste script in Footer section.',
-      'Save and test widget on published pages.',
-    ],
-    Wix: [
-      'Open Settings > Custom Code in your Wix dashboard.',
-      'Add script to Body - end for all pages.',
-      'Publish and verify widget renders.',
-    ],
-    'Next.js': [
-      'Open your shared layout file (app/layout.tsx or pages/_app.tsx).',
-      'Add script using next/script with strategy afterInteractive.',
-      'Deploy and confirm widget appears in production pages.',
-    ],
-    React: [
-      'Add script injection in App root using useEffect.',
-      'Append script tag once and clean up on unmount if needed.',
-      'Build and deploy, then validate widget render.',
-    ],
-    Framer: [
-      'Open Site Settings > Custom Code.',
-      'Paste script in End of body section.',
-      'Publish and confirm widget in live site.',
-    ],
-    GoDaddy: [
-      'Open Website Builder > Settings > Site-wide code.',
-      'Paste script before closing body tag.',
-      'Republish site and verify widget.',
-    ],
-    Ghost: [
-      'Go to Settings > Code Injection.',
-      'Paste script in Site Footer.',
-      'Save and check published pages.',
-    ],
-    WooCommerce: [
-      'Open WordPress admin > Appearance > Theme File Editor.',
-      'Add script in footer.php before closing body tag.',
-      'Save and clear cache plugins.',
-    ],
-    'Google Sites': [
-      'Open your Google Site and go to Insert > Embed.',
-      'Paste the script URL/snippet using embed options.',
-      'Publish the site and verify widget behavior.',
-    ],
-    Weebly: [
-      'Open Theme > Edit HTML/CSS in Weebly.',
-      'Paste script before closing body tag in master template.',
-      'Publish and test on live pages.',
-    ],
-    Blogger: [
-      'Go to Theme > Edit HTML.',
-      'Paste script before closing body tag.',
-      'Save theme and validate widget on blog pages.',
-    ],
-    Tumblr: [
-      'Open Edit Theme > Edit HTML.',
-      'Paste script before closing body tag.',
-      'Save and check your blog frontend.',
-    ],
-  };
+
   const platformInstructions =
     (activePlatform && installTips[activePlatform.name]) || [
       'Open your website template or global layout file.',
@@ -875,7 +889,6 @@ export function OnboardingWizard() {
                   <div className="ob-embed-ready-row">
                     {['Source connected', 'Widget saved', 'Code ready'].map((label) => (
                       <div key={label} className="ob-embed-ready-chip">
-                        <Check className="h-3 w-3" />
                         {label}
                       </div>
                     ))}
@@ -947,7 +960,7 @@ export function OnboardingWizard() {
                     onClick={() => setActivePlatform(p)}
                     title={`Open ${p.name} instructions`}
                   >
-                    <span className="ob-platform-icon-badge" style={{ background: `${p.color}1e`, borderColor: `${p.color}50` }}>
+                    <span className="ob-platform-icon-wrap" style={{ background: `${p.color}0a`, borderColor: `${p.color}30` }}>
                       {logoFallback[p.name] ? (
                         <span className="ob-platform-icon-fallback">{p.abbr}</span>
                       ) : (
@@ -960,7 +973,6 @@ export function OnboardingWizard() {
                         />
                       )}
                     </span>
-                    <span className="ob-platform-name">{p.name}</span>
                   </button>
                 ))}
               </div>
@@ -987,16 +999,16 @@ export function OnboardingWizard() {
               {/* ── Centered card pipeline ── */}
               <div className="ob-pipe-flow">
                 {([
-                  { key: 'detect',  title: 'Website detected',   desc: 'Source URL validated',            done: pipelineStage !== 'idle',                               active: false },
-                  { key: 'crawl',   title: 'Pages discovered',   desc: 'Crawling all linked pages',        done: ['indexing','done'].includes(pipelineStage),            active: isScrapingState },
-                  { key: 'process', title: 'Content processed',  desc: 'Formatting for AI retrieval',      done: pipelineStage === 'done',                               active: isIndexingState },
-                  { key: 'ready',   title: 'Knowledge ready',    desc: 'Widget can now answer questions',  done: pipelineStage === 'done',                               active: false },
+                  { key: 'detect', title: 'Website detected', desc: 'Source URL validated', done: pipelineStage !== 'idle', active: false },
+                  { key: 'crawl', title: 'Pages discovered', desc: 'Crawling all linked pages', done: ['indexing', 'done'].includes(pipelineStage), active: isScrapingState },
+                  { key: 'process', title: 'Content processed', desc: 'Formatting for AI retrieval', done: pipelineStage === 'done', active: isIndexingState },
+                  { key: 'ready', title: 'Knowledge ready', desc: 'Widget can now answer questions', done: pipelineStage === 'done', active: false },
                 ] as const).map((node, idx, arr) => {
                   const state: 'done' | 'active' | 'failed' | 'pending' =
                     isFailedState && !node.done ? 'failed'
-                    : node.done ? 'done'
-                    : node.active ? 'active'
-                    : 'pending';
+                      : node.done ? 'done'
+                        : node.active ? 'active'
+                          : 'pending';
                   const isLast = idx === arr.length - 1;
                   const connectorLit = state === 'done' || state === 'active';
                   return (
@@ -1005,9 +1017,9 @@ export function OnboardingWizard() {
                       <div className={`ob-pipe-card ob-pipe-card--${state}`}>
                         {/* Left: status icon */}
                         <div className={`ob-pipe-icon ob-pipe-icon--${state}`}>
-                          {state === 'done'    && <Check className="h-3.5 w-3.5" />}
-                          {state === 'active'  && <span className="ob-pipe-spinner" />}
-                          {state === 'failed'  && <AlertTriangle className="h-3 w-3" />}
+                          {state === 'done' && <Check className="h-3.5 w-3.5" />}
+                          {state === 'active' && <span className="ob-pipe-spinner" />}
+                          {state === 'failed' && <AlertTriangle className="h-3 w-3" />}
                           {state === 'pending' && <span className="ob-pipe-pending-ring" />}
                         </div>
                         {/* Center: text */}
@@ -1017,10 +1029,10 @@ export function OnboardingWizard() {
                         </div>
                         {/* Right: status chip */}
                         <span className={`ob-pipe-chip ob-pipe-chip--${state}`}>
-                          {state === 'done'    ? '✓' :
-                           state === 'active'  ? (pipelineProgress > 0 ? `${pipelineProgress}%` : '…') :
-                           state === 'failed'  ? '!' :
-                           '–'}
+                          {state === 'done' ? '✓' :
+                            state === 'active' ? (pipelineProgress > 0 ? `${pipelineProgress}%` : '…') :
+                              state === 'failed' ? '!' :
+                                '–'}
                         </span>
                       </div>
 
@@ -1030,7 +1042,7 @@ export function OnboardingWizard() {
                           <span className={`ob-pipe-conn-dot ob-pipe-conn-dot--top ob-pipe-conn-dot--${state}`} />
                           <div className="ob-pipe-conn-line">
                             {state === 'active' && <span className="ob-pipe-conn-packet" />}
-                            {state === 'done'   && <span className="ob-pipe-conn-packet ob-pipe-conn-packet--done" />}
+                            {state === 'done' && <span className="ob-pipe-conn-packet ob-pipe-conn-packet--done" />}
                           </div>
                           <span className={`ob-pipe-conn-dot ob-pipe-conn-dot--bottom ob-pipe-conn-dot--${state}`} />
                         </div>
@@ -1111,20 +1123,22 @@ export function OnboardingWizard() {
                 </button>
               </div>
 
-              <div className="ob-install-script-block">
-                <span>Embed script</span>
-                <pre>
-                  <code>{embedCode || '<script src="..."></script>'}</code>
-                </pre>
-              </div>
+              <div className="ob-install-modal-content">
+                <div className="ob-install-script-block">
+                  <span>Embed script</span>
+                  <pre>
+                    <code>{embedCode || '<script src="..."></script>'}</code>
+                  </pre>
+                </div>
 
-              <div className="ob-install-steps">
-                {(platformInstructions.length ? platformInstructions : ['Paste the script before closing body tag and publish your site.']).map((item, idx) => (
-                  <div key={`${activePlatform.name}-${idx}`} className="ob-install-step-row">
-                    <span>{idx + 1}</span>
-                    <p>{item}</p>
-                  </div>
-                ))}
+                <div className="ob-install-steps">
+                  {(platformInstructions.length ? platformInstructions : ['Paste the script before closing body tag and publish your site.']).map((item, idx) => (
+                    <div key={`${activePlatform.name}-${idx}`} className="ob-install-step-row">
+                      <span>{idx + 1}</span>
+                      <p>{item}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
