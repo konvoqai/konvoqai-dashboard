@@ -41,7 +41,7 @@ export function GoogleLoginButton({ mode }: GoogleLoginButtonProps) {
     <Button
       type="button"
       variant="outline"
-      className="h-12 w-full justify-center rounded-lg border border-[color:var(--border-strong)] bg-transparent text-base font-semibold text-[var(--text-1)] shadow-none hover:bg-[color:var(--surface)] focus-visible:border-[color:var(--text-1)] focus-visible:ring-black/20 dark:focus-visible:ring-white/20"
+      className="auth-secondary-btn h-12 w-full justify-center rounded-lg text-base font-semibold shadow-none"
       onClick={handleGoogleLogin}
       disabled={googleAuthMutation.isPending}
     >

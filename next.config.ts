@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   async headers() {
     const isDev = process.env.NODE_ENV !== 'production';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
     const scriptSrc = isDev
       ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
       : "script-src 'self' 'unsafe-inline'";
@@ -35,7 +36,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
               "connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com",
-              `frame-src 'self' ${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}`,
+              `frame-src 'self' ${backendUrl}`,
               "frame-ancestors 'none'",
               "object-src 'none'",
               "base-uri 'self'",
@@ -44,6 +45,30 @@ const nextConfig: NextConfig = {
           {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload',
+          },
+        ],
+      },
+      // Widget preview iframe: allow same-origin framing, load scripts from backend
+      {
+        source: '/widget-preview',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              `script-src 'self' 'unsafe-inline' ${backendUrl}`,
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self' data:",
+              `connect-src 'self' ${backendUrl}`,
+              "frame-ancestors 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+            ].join('; '),
           },
         ],
       },

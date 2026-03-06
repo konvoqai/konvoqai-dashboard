@@ -41,17 +41,18 @@ function LoginPageInner() {
   const switchCta = mode === 'signup' ? 'Log in' : 'Sign up';
 
   return (
-    <div className="flex min-h-screen items-center px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mx-auto w-full max-w-[1180px]">
+    <div className="auth-shell flex min-h-screen items-start px-4 py-8 sm:px-6 sm:py-10 lg:items-center lg:px-10">
+      <div className="mx-auto w-full max-w-[1280px]">
         <div className="mb-8 flex items-center justify-between text-sm">
           <div className="">
             {/* <Image src="/logo.png" alt="Logo" width={100} height={100} /> */}
           </div>
-          <a href={WEBSITE_URL} className="text-base font-semibold tracking-[-0.02em] text-[var(--text-1)]">Back to konvoqAI</a>
+          <a href={WEBSITE_URL} className="auth-link text-base font-semibold tracking-[-0.02em]">Back to konvoqAI</a>
         </div>
 
-        <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_auto_0.85fr] lg:gap-10">
+        <div className="auth-main-grid grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_24px_minmax(0,1fr)] lg:items-center lg:gap-10">
           <motion.section
+            className="auth-content-panel order-2 lg:order-1"
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
@@ -66,7 +67,7 @@ function LoginPageInner() {
               {subtitle}
             </p>
 
-            <div className="mt-8 grid max-w-[640px] gap-3 sm:grid-cols-3">
+            <div className="auth-highlights-grid mt-8 grid max-w-[640px] gap-3 sm:grid-cols-3">
               {highlights.map((item) => (
                 <div
                   key={item.label}
@@ -82,7 +83,7 @@ function LoginPageInner() {
               ))}
             </div>
 
-            <div className="mt-8 grid max-w-[640px] gap-3 sm:grid-cols-2">
+            <div className="auth-features-grid mt-8 grid max-w-[640px] gap-3 sm:grid-cols-2">
               {[
                 'Train on website and docs',
                 'One assistant for support and sales',
@@ -102,34 +103,11 @@ function LoginPageInner() {
                 </div>
               ))}
             </div>
-
-            <div className="mt-8 max-w-[640px] border-l pl-4" style={{ borderColor: 'color-mix(in srgb, var(--border-strong) 70%, transparent)' }}>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-3)]">
-                First hour checklist
-              </p>
-              <div className="space-y-3">
-                {onboardingSteps.map((step, index) => (
-                  <div key={step} className="flex items-start gap-3">
-                    <span
-                      className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold"
-                      style={{
-                        borderColor: 'color-mix(in srgb, var(--border-strong) 70%, transparent)',
-                        color: 'var(--text-1)',
-                        background: 'color-mix(in srgb, var(--surface-2) 72%, transparent)',
-                      }}
-                    >
-                      {index + 1}
-                    </span>
-                    <p className="text-sm leading-6 text-[var(--text-2)]">{step}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
           </motion.section>
 
           <div
             aria-hidden
-            className="auth-divider-track hidden h-[min(70vh,560px)] w-6 justify-self-center lg:block"
+            className="auth-divider-track hidden h-[min(70vh,560px)] w-6 justify-self-center lg:block lg:order-2"
           >
             <div className="auth-divider-core" />
           </div>
@@ -138,7 +116,7 @@ function LoginPageInner() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.05, ease: 'easeOut' }}
-            className="w-full max-w-[460px] lg:justify-self-center"
+            className="auth-form-panel order-1 w-full max-w-[460px] justify-self-center lg:order-3"
           >
             {provider === 'google' && initialStep === 'code' && initialEmail ? (
               <p className="mb-4 text-sm text-[var(--text-2)]">
@@ -147,7 +125,7 @@ function LoginPageInner() {
             ) : null}
 
             {error ? (
-              <p className="mb-4 text-sm text-red-400">
+              <p className="auth-error-banner mb-4 text-sm">
                 Login failed: {error.replaceAll('_', ' ')}
               </p>
             ) : null}
@@ -156,10 +134,10 @@ function LoginPageInner() {
               <GoogleLoginButton mode={mode} />
             </div>
 
-            <div className="my-8 flex items-center gap-4">
-              <div className="h-px flex-1 bg-[color:var(--border-strong)]" />
-              <span className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--text-3)]">or</span>
-              <div className="h-px flex-1 bg-[color:var(--border-strong)]" />
+            <div className="auth-or-row my-8 flex items-center gap-4">
+              <div className="auth-divider-line h-px flex-1" />
+              <span className="auth-divider-label text-sm font-semibold uppercase tracking-[0.16em]">or</span>
+              <div className="auth-divider-line h-px flex-1" />
             </div>
 
             <EmailLoginForm
@@ -171,18 +149,18 @@ function LoginPageInner() {
 
             <p className="mt-8 text-center text-sm text-[var(--text-2)] sm:text-base">
               {switchLead}{' '}
-              <Link href={switchHref} className="text-[var(--text-1)] no-underline hover:underline">
+              <Link href={switchHref} className="auth-link no-underline hover:underline">
                 {switchCta}
               </Link>
             </p>
 
             <p className="mt-7 text-center text-sm leading-6 text-[var(--text-3)]">
               You agree to our{' '}
-              <a href={`${WEBSITE_URL}/terms`} className="text-[var(--text-1)] no-underline hover:underline">
+              <a href={`${WEBSITE_URL}/terms`} className="auth-link no-underline hover:underline">
                 Terms of Use
               </a>{' '}
               and{' '}
-              <a href={`${WEBSITE_URL}/privacy`} className="text-[var(--text-1)] no-underline hover:underline">
+              <a href={`${WEBSITE_URL}/privacy`} className="auth-link no-underline hover:underline">
                 Privacy Policy
               </a>
             </p>

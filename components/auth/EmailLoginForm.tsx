@@ -90,11 +90,7 @@ export function EmailLoginForm({
     return (
       <form onSubmit={handleVerifyCode} className="space-y-4">
         <div
-          className="rounded-lg border px-4 py-3"
-          style={{
-            borderColor: 'color-mix(in srgb, var(--border-strong) 70%, transparent)',
-            background: 'color-mix(in srgb, var(--surface) 60%, transparent)',
-          }}
+          className="auth-success-panel rounded-lg border px-4 py-3"
         >
           <p className="text-sm font-semibold text-[var(--text-1)]">Verification code sent</p>
           <p className="mt-1 text-sm text-[var(--text-2)]">
@@ -117,14 +113,14 @@ export function EmailLoginForm({
             maxLength={6}
             required
             autoFocus
-            className="h-12 rounded-lg border-[color:var(--border-strong)] bg-transparent text-center text-base tracking-[0.3em] text-[var(--text-1)] shadow-none focus-visible:border-[color:var(--text-1)] focus-visible:ring-black/20 dark:focus-visible:ring-white/20"
+            className="auth-input h-12 rounded-lg text-center text-base tracking-[0.3em]"
           />
         </div>
 
         <div className="space-y-3">
           <Button
             type="submit"
-            className="h-12 w-full rounded-lg border border-[color:var(--text-1)] bg-[var(--text-1)] text-sm font-semibold text-[var(--background)] shadow-none hover:opacity-90"
+            className="auth-primary-btn h-12 w-full rounded-lg text-sm font-semibold"
             disabled={loginMutation.isPending}
           >
             {loginMutation.isPending ? 'Verifying...' : 'Verify code'}
@@ -133,7 +129,7 @@ export function EmailLoginForm({
             <Button
               type="button"
               variant="outline"
-              className="h-11 w-full rounded-lg bg-transparent shadow-none"
+              className="auth-secondary-btn h-11 w-full rounded-lg bg-transparent shadow-none"
               onClick={handleOpenGmail}
             >
               <MailOpen className="h-4 w-4" />
@@ -142,7 +138,7 @@ export function EmailLoginForm({
             <Button
               type="button"
               variant="outline"
-              className="h-11 w-full rounded-lg bg-transparent shadow-none"
+              className="auth-secondary-btn h-11 w-full rounded-lg bg-transparent shadow-none"
               onClick={handleBackToEmail}
             >
               <ArrowLeft className="h-4 w-4" />
@@ -168,13 +164,13 @@ export function EmailLoginForm({
           onChange={(e) => setEmail(e.target.value)}
           required
           autoFocus
-          className="h-12 rounded-lg border-[color:var(--border-strong)] bg-transparent text-base text-[var(--text-1)] shadow-none focus-visible:border-[color:var(--text-1)] focus-visible:ring-black/20 dark:focus-visible:ring-white/20"
+          className="auth-input h-12 rounded-lg text-base"
         />
       </div>
 
       <Button
         type="submit"
-        className="h-12 w-full rounded-lg border border-[color:var(--text-1)] bg-[var(--text-1)] text-sm font-semibold text-[var(--background)] shadow-none hover:opacity-90"
+        className="auth-primary-btn h-12 w-full rounded-lg text-sm font-semibold"
         disabled={requestCodeMutation.isPending}
       >
         {requestCodeMutation.isPending

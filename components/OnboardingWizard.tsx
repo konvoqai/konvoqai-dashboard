@@ -6,16 +6,15 @@ import { Label } from '@/components/ui/label';
 import { apiClient } from '@/lib/api/axios-instance';
 import { useLogout, useUser } from '@/lib/auth/auth-hooks';
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Check,
-  ExternalLink,
-  LayoutGrid,
-  Link2,
+  Circle,
+  Code2,
+  Copy,
   LogOut,
-  Palette,
   Sparkles,
-  Upload,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
@@ -33,21 +32,29 @@ const defaultWidgetConfig = {
   fontSize: 14,
 };
 
-const widgetPreviewURL = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/widget/preview`;
+const widgetPreviewURL = '/widget-preview';
 
 interface SourceItem {
   id: string;
   url: string;
 }
 
-interface DocumentItem {
-  id: string;
-  fileName: string;
-}
-
 interface ScrapeJob {
   status: string;
   progress: number;
+}
+
+interface AutoBrand {
+  primaryColor?: string | null;
+  botName?: string | null;
+  welcomeMessage?: string | null;
+}
+
+interface PlatformItem {
+  name: string;
+  color: string;
+  logo: string;
+  abbr: string;
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -60,21 +67,64 @@ const steps = [
     id: 1,
     title: 'Train your knowledge',
     description: 'Add website pages and docs so Konvoq has grounded answers from the start.',
-    icon: Link2,
   },
   {
     id: 2,
     title: 'Style your widget',
     description: 'Tune the widget so it matches your product before you launch it live.',
-    icon: Palette,
   },
   {
     id: 3,
     title: 'Launch and install',
     description: 'Copy the install snippet and finish onboarding for your workspace.',
-    icon: LayoutGrid,
   },
 ];
+
+const platformList: PlatformItem[] = [
+  { name: 'HTML', color: '#e34c26', logo: 'https://cdn.simpleicons.org/html5/e34c26', abbr: 'HT' },
+  { name: 'WordPress', color: '#21759b', logo: 'https://cdn.simpleicons.org/wordpress/21759b', abbr: 'WP' },
+  { name: 'Shopify', color: '#96bf48', logo: 'https://cdn.simpleicons.org/shopify/96bf48', abbr: 'SH' },
+  { name: 'Webflow', color: '#4353ff', logo: 'https://cdn.simpleicons.org/webflow/4353ff', abbr: 'WF' },
+  { name: 'Squarespace', color: '#b6b6b6', logo: 'https://cdn.simpleicons.org/squarespace/b6b6b6', abbr: 'SQ' },
+  { name: 'Wix', color: '#faad21', logo: 'https://cdn.simpleicons.org/wix/faad21', abbr: 'WX' },
+  { name: 'Next.js', color: '#dcdcdc', logo: 'https://cdn.simpleicons.org/nextdotjs/dcdcdc', abbr: 'NX' },
+  { name: 'React', color: '#61dafb', logo: 'https://cdn.simpleicons.org/react/61dafb', abbr: 'RE' },
+  { name: 'Framer', color: '#0099ff', logo: 'https://cdn.simpleicons.org/framer/0099ff', abbr: 'FR' },
+  { name: 'GoDaddy', color: '#1bdbdb', logo: 'https://cdn.simpleicons.org/godaddy/1bdbdb', abbr: 'GD' },
+  { name: 'Ghost', color: '#9badb7', logo: 'https://cdn.simpleicons.org/ghost/9badb7', abbr: 'GH' },
+  { name: 'WooCommerce', color: '#9b59b6', logo: 'https://cdn.simpleicons.org/woocommerce/9b59b6', abbr: 'WC' },
+  { name: 'Google Sites', color: '#4285f4', logo: 'https://www.google.com/s2/favicons?domain=sites.google.com&sz=64', abbr: 'GS' },
+  { name: 'Weebly', color: '#f36c20', logo: 'https://www.google.com/s2/favicons?domain=weebly.com&sz=64', abbr: 'WB' },
+  { name: 'Blogger', color: '#f57d00', logo: 'https://cdn.simpleicons.org/blogger/f57d00', abbr: 'BL' },
+  { name: 'Tumblr', color: '#35a0dc', logo: 'https://cdn.simpleicons.org/tumblr/35a0dc', abbr: 'TB' },
+];
+
+// ── Color swatch input ────────────────────────────────────────────────────
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="ob-color-field">
+      <span className="ob-color-label">{label}</span>
+      <div className="ob-color-swatch">
+        <span className="ob-color-dot" style={{ background: value }} />
+        <span className="ob-color-hex">{value.toUpperCase()}</span>
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label={label}
+        />
+      </div>
+    </div>
+  );
+}
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -88,7 +138,6 @@ export function OnboardingWizard() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [sources, setSources] = useState<SourceItem[]>([]);
-  const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [planLimits, setPlanLimits] = useState<{ scrapedPages: number; documents: number }>({
     scrapedPages: 30,
@@ -103,7 +152,11 @@ export function OnboardingWizard() {
   const [isSavingWidget, setIsSavingWidget] = useState(false);
   const [iframeReady, setIframeReady] = useState(false);
   const [embedCode, setEmbedCode] = useState('');
+  const [autoBrand, setAutoBrand] = useState<AutoBrand | null>(null);
+  const [activePlatform, setActivePlatform] = useState<PlatformItem | null>(null);
+  const [logoFallback, setLogoFallback] = useState<Record<string, boolean>>({});
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const autoAppliedRef = useRef(false);
 
   const postWidgetConfig = useCallback(
     (config = widgetConfig) => {
@@ -128,9 +181,8 @@ export function OnboardingWizard() {
       return;
     }
 
-    const [sourcesRes, docsRes, widgetRes, embedRes] = await Promise.all([
+    const [sourcesRes, widgetRes, embedRes] = await Promise.all([
       apiClient.get('/dashboard/sources'),
-      apiClient.get('/dashboard/documents'),
       apiClient.get('/dashboard/widget'),
       apiClient.get('/dashboard/embed').catch(() => ({ data: {} })),
     ]);
@@ -138,8 +190,6 @@ export function OnboardingWizard() {
     setSources(sourcesRes.data?.sources || []);
     setStats(sourcesRes.data?.stats || {});
     setPlanLimits(sourcesRes.data?.planLimits || { scrapedPages: 30, documents: 5 });
-    setDocuments(docsRes.data?.documents || []);
-
     const widget = widgetRes.data?.widget;
     if (widget) {
       setWidgetName(widget.name || 'My Chat Widget');
@@ -153,6 +203,7 @@ export function OnboardingWizard() {
     }
   }, [router]);
 
+  // Auth + initial load
   useEffect(() => {
     if (isLoading) return;
     if (!user) {
@@ -168,6 +219,7 @@ export function OnboardingWizard() {
       .finally(() => setCheckingStatus(false));
   }, [isLoading, user, router, loadOnboardingState]);
 
+  // Scrape job polling
   useEffect(() => {
     if (!jobId) return;
     if (jobStatus === 'done' || jobStatus === 'failed') return;
@@ -190,10 +242,48 @@ export function OnboardingWizard() {
     return () => clearInterval(timer);
   }, [jobId, jobStatus, loadOnboardingState]);
 
+  // Send widget config to iframe when ready or config changes
   useEffect(() => {
     if (!iframeReady) return;
     postWidgetConfig(widgetConfig);
   }, [widgetConfig, iframeReady, postWidgetConfig]);
+
+  // Reset iframe state when leaving step 2
+  useEffect(() => {
+    if (step !== 2) setIframeReady(false);
+  }, [step]);
+
+  // Auto-brand extraction: fires once when entering step 2 (only if widget not yet saved)
+  useEffect(() => {
+    if (step !== 2) return;
+    if (autoAppliedRef.current) return;
+    if (widgetSaved) {
+      autoAppliedRef.current = true;
+      return;
+    }
+    const sourceUrl = sources[0]?.url;
+    if (!sourceUrl) return;
+
+    void apiClient
+      .get<{ success: boolean; brand: AutoBrand | null }>(
+        `/dashboard/brand-extract?url=${encodeURIComponent(sourceUrl)}`,
+      )
+      .then((res) => {
+        const brand = res.data?.brand;
+        if (!brand) return;
+        setAutoBrand(brand);
+        setWidgetConfig((p) => ({
+          ...p,
+          ...(brand.primaryColor ? { primaryColor: brand.primaryColor! } : {}),
+          ...(brand.botName ? { botName: brand.botName! } : {}),
+          ...(brand.welcomeMessage ? { welcomeMessage: brand.welcomeMessage! } : {}),
+        }));
+      })
+      .catch(() => { })
+      .finally(() => {
+        autoAppliedRef.current = true;
+      });
+  }, [step, sources, widgetSaved]);
 
   const handleLogout = async () => {
     try {
@@ -264,6 +354,23 @@ export function OnboardingWizard() {
     }
   };
 
+  const handleResetToAuto = () => {
+    if (!autoBrand) return;
+    setWidgetSaved(false);
+    setWidgetConfig((p) => ({
+      ...p,
+      ...(autoBrand.primaryColor ? { primaryColor: autoBrand.primaryColor! } : {}),
+      ...(autoBrand.botName ? { botName: autoBrand.botName! } : {}),
+      ...(autoBrand.welcomeMessage ? { welcomeMessage: autoBrand.welcomeMessage! } : {}),
+    }));
+  };
+
+  const handleResetToDefaults = () => {
+    setWidgetSaved(false);
+    setWidgetConfig(defaultWidgetConfig);
+    setWidgetName('My Chat Widget');
+  };
+
   const goToStep = async (target: 1 | 2 | 3) => {
     const hasScrapedSource = (stats?.scrapedPages ?? 0) > 0 || sources.length > 0;
     if (target > 1 && !hasScrapedSource) {
@@ -300,8 +407,8 @@ export function OnboardingWizard() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="section-surface flex items-center gap-3 px-5 py-4">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--accent-strong)] border-t-transparent" />
-          <span className="text-sm text-[var(--text-2)]">Preparing your workspace</span>
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-(--accent-strong) border-t-transparent" />
+          <span className="text-sm text-(--text-2)">Preparing your workspace</span>
         </div>
       </div>
     );
@@ -310,433 +417,590 @@ export function OnboardingWizard() {
   const scrapedPagesUsed = stats?.scrapedPages ?? 0;
   const docsUsed = stats?.documents ?? 0;
   const canProceedStep1 = scrapedPagesUsed > 0 || sources.length > 0;
-  const stepReady = [
-    true,
-    canProceedStep1,
-    widgetSaved,
-  ];
+  const currentStep = steps[step - 1];
+  const normalizedJobStatus = (jobStatus || 'idle').toLowerCase();
+  const isFailedState = normalizedJobStatus === 'failed';
+  const isScrapingState = ['queued', 'scraping'].includes(normalizedJobStatus);
+  const isIndexingState = ['formatting', 'indexing'].includes(normalizedJobStatus);
+  const hasActiveJob = !!jobId && !['done', 'failed', 'idle'].includes(normalizedJobStatus);
+  const hasPipelineData = canProceedStep1;
+  const pipelineStage: 'idle' | 'scraping' | 'indexing' | 'done' | 'failed' = isFailedState
+    ? 'failed'
+    : isScrapingState
+      ? 'scraping'
+      : isIndexingState
+        ? 'indexing'
+        : normalizedJobStatus === 'done' || (hasPipelineData && !hasActiveJob)
+          ? 'done'
+          : 'idle';
+  const pipelineProgress = pipelineStage === 'done' ? 100 : Math.max(0, Math.min(jobProgress || 0, 100));
+  const stageLabel: Record<typeof pipelineStage, string> = {
+    idle: 'Waiting for training source',
+    scraping: 'Collecting and scraping pages',
+    indexing: 'Formatting and indexing content',
+    done: 'Training pipeline completed',
+    failed: 'Pipeline encountered an issue',
+  };
+  const shortStepTitle: Record<1 | 2 | 3, string> = { 1: 'Train', 2: 'Style', 3: 'Launch' };
+  const installTips: Record<string, string[]> = {
+    HTML: [
+      'Open your main HTML file (for example index.html).',
+      'Paste the script right before the closing body tag.',
+      'Save and deploy your site, then refresh to verify widget load.',
+    ],
+    WordPress: [
+      'Go to Appearance > Theme File Editor or a header/footer script plugin.',
+      'Paste the script inside footer.php before the closing body tag.',
+      'Save changes and clear cache plugin/CDN cache.',
+    ],
+    Shopify: [
+      'Open Online Store > Themes > Edit code.',
+      'In layout/theme.liquid, paste script before the closing body tag.',
+      'Save, publish, and test on storefront pages.',
+    ],
+    Webflow: [
+      'Open Project Settings > Custom Code.',
+      'Paste script in Footer Code section and save.',
+      'Publish site and verify widget is visible.',
+    ],
+    Squarespace: [
+      'Open Settings > Advanced > Code Injection.',
+      'Paste script in Footer section.',
+      'Save and test widget on published pages.',
+    ],
+    Wix: [
+      'Open Settings > Custom Code in your Wix dashboard.',
+      'Add script to Body - end for all pages.',
+      'Publish and verify widget renders.',
+    ],
+    'Next.js': [
+      'Open your shared layout file (app/layout.tsx or pages/_app.tsx).',
+      'Add script using next/script with strategy afterInteractive.',
+      'Deploy and confirm widget appears in production pages.',
+    ],
+    React: [
+      'Add script injection in App root using useEffect.',
+      'Append script tag once and clean up on unmount if needed.',
+      'Build and deploy, then validate widget render.',
+    ],
+    Framer: [
+      'Open Site Settings > Custom Code.',
+      'Paste script in End of body section.',
+      'Publish and confirm widget in live site.',
+    ],
+    GoDaddy: [
+      'Open Website Builder > Settings > Site-wide code.',
+      'Paste script before closing body tag.',
+      'Republish site and verify widget.',
+    ],
+    Ghost: [
+      'Go to Settings > Code Injection.',
+      'Paste script in Site Footer.',
+      'Save and check published pages.',
+    ],
+    WooCommerce: [
+      'Open WordPress admin > Appearance > Theme File Editor.',
+      'Add script in footer.php before closing body tag.',
+      'Save and clear cache plugins.',
+    ],
+    'Google Sites': [
+      'Open your Google Site and go to Insert > Embed.',
+      'Paste the script URL/snippet using embed options.',
+      'Publish the site and verify widget behavior.',
+    ],
+    Weebly: [
+      'Open Theme > Edit HTML/CSS in Weebly.',
+      'Paste script before closing body tag in master template.',
+      'Publish and test on live pages.',
+    ],
+    Blogger: [
+      'Go to Theme > Edit HTML.',
+      'Paste script before closing body tag.',
+      'Save theme and validate widget on blog pages.',
+    ],
+    Tumblr: [
+      'Open Edit Theme > Edit HTML.',
+      'Paste script before closing body tag.',
+      'Save and check your blog frontend.',
+    ],
+  };
+  const platformInstructions =
+    (activePlatform && installTips[activePlatform.name]) || [
+      'Open your website template or global layout file.',
+      'Paste the script before the closing body tag.',
+      'Publish changes and verify widget appears.',
+    ];
+  const checklistItems = [
+    {
+      id: 'crawl',
+      label: 'Crawling website pages',
+      description: 'Collecting source pages and extracting content.',
+      state:
+        pipelineStage === 'failed' && !hasPipelineData
+          ? 'failed'
+          : pipelineStage === 'scraping'
+            ? 'active'
+            : ['indexing', 'done'].includes(pipelineStage)
+              ? 'done'
+              : 'pending',
+    },
+    {
+      id: 'process',
+      label: 'Processing your data',
+      description: 'Formatting content for retrieval and QA.',
+      state:
+        pipelineStage === 'failed' && hasPipelineData
+          ? 'failed'
+          : pipelineStage === 'indexing'
+            ? 'active'
+            : pipelineStage === 'done'
+              ? 'done'
+              : 'pending',
+    },
+    {
+      id: 'generate',
+      label: 'Generating FAQ / launch context',
+      description: 'Finalizing readiness for widget answers.',
+      state: pipelineStage === 'done' ? 'done' : 'pending',
+    },
+  ] as const;
 
   return (
-    <div className="dashboard-shell min-h-screen">
-      <div className="section-frame overflow-hidden px-6 py-6 sm:px-8 sm:py-8">
-        <div className="relative z-10 space-y-8">
-          <div className="dashboard-page-header">
-            <div className="space-y-4">
-              <div className="dashboard-kicker">
-                <Sparkles className="h-3.5 w-3.5 text-[var(--accent-strong)]" />
-                3-step setup
-              </div>
-              <div>
-                <h1 className="dashboard-panel-title">Set up your Konvoq workspace.</h1>
-                <p className="dashboard-panel-copy max-w-2xl">
-                  Move from training to widget styling to launch in one guided flow that matches the rest of the product.
-                </p>
-              </div>
-            </div>
+    <div className="onboarding-setup-shell">
+      <div className="onboarding-setup-frame section-frame">
+        {/* ── Slim topbar: brand | steps | actions ── */}
+        <header className="onboarding-setup-topbar">
+          <div className="onboarding-setup-brand">Konvoq</div>
 
-            <div className="dashboard-meta-row">
-              <div className="dashboard-chip">
-                <span className="h-2 w-2 rounded-full bg-[var(--accent-raw)]" />
-                {scrapedPagesUsed}/{planLimits.scrapedPages} pages
-              </div>
-              <div className="dashboard-chip">
-                <Upload className="h-3.5 w-3.5" />
-                {docsUsed}/{planLimits.documents} docs
-              </div>
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            </div>
-          </div>
-
-          <div className="dashboard-grid-three">
+          <div className="onboarding-setup-progress" role="tablist" aria-label="Onboarding steps">
             {steps.map((item, index) => {
-              const active = step === item.id;
-              const complete = step > item.id || (item.id === 2 && widgetSaved) || (item.id === 1 && canProceedStep1 && step > 1);
-
+              const stepId = item.id as 1 | 2 | 3;
+              const isActive = step === stepId;
+              const isDone =
+                step > stepId || (stepId === 1 && canProceedStep1 && step > 1) || (stepId === 2 && widgetSaved && step === 3);
               return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => void goToStep(item.id as 1 | 2 | 3)}
-                  className="section-surface text-left"
-                  style={{
-                    padding: 18,
-                    opacity: active || stepReady[index] || item.id < step ? 1 : 0.75,
-                    background: active
-                      ? 'linear-gradient(160deg, color-mix(in srgb, var(--accent-muted) 82%, var(--surface-2) 18%) 0%, color-mix(in srgb, var(--surface) 92%, transparent) 100%)'
-                      : undefined,
-                  }}
-                >
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-[color:var(--surface)]">
-                      {complete ? (
-                        <Check className="h-4 w-4 text-[var(--accent-strong)]" />
-                      ) : (
-                        <item.icon className="h-4 w-4 text-[var(--text-2)]" />
-                      )}
-                    </div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-3)]">
-                      Step {item.id}
-                    </span>
-                  </div>
-                  <div className="mb-2 text-lg font-bold tracking-[-0.03em] text-[var(--text-1)]">
-                    {item.title}
-                  </div>
-                  <p className="m-0 text-sm leading-6 text-[var(--text-2)]">{item.description}</p>
-                </button>
+                <div key={item.id} className="onboarding-setup-progress-wrap">
+                  <button
+                    type="button"
+                    onClick={() => void goToStep(stepId)}
+                    className={`onboarding-setup-progress-step ${isActive ? 'is-active' : ''} ${isDone ? 'is-done' : ''}`}
+                  >
+                    <span className="onboarding-setup-progress-index">{item.id}</span>
+                    <span>{shortStepTitle[stepId]}</span>
+                  </button>
+                  {index < steps.length - 1 ? <span className="onboarding-setup-progress-line" aria-hidden /> : null}
+                </div>
               );
             })}
           </div>
 
-          {step === 1 ? (
-            <div className="dashboard-grid-two">
-              <div className="section-surface p-6">
-                <div className="mb-6 flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="mb-2 text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">
-                      Add your website
-                    </h2>
-                    <p className="m-0 text-sm leading-6 text-[var(--text-2)]">
-                      Start with at least one public URL so Konvoq can crawl your pages and build grounded answers.
-                    </p>
-                  </div>
-                  <div className="dashboard-chip">{scrapedPagesUsed}/{planLimits.scrapedPages} pages used</div>
-                </div>
+          <div className="onboarding-setup-topbar-actions">
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </div>
+        </header>
 
-                <form onSubmit={handleAddUrl} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="source-url" className="text-sm font-semibold text-[var(--text-2)]">
-                      Website URL
-                    </Label>
-                    <Input
-                      id="source-url"
-                      type="url"
-                      placeholder="https://example.com"
-                      value={url}
-                      onChange={(e) => setUrl(e.target.value)}
-                    />
-                  </div>
-                  <Button type="submit" disabled={isSaving}>
-                    {isSaving ? 'Starting scrape...' : 'Start scraping'}
-                  </Button>
-                </form>
+        {/* ── Main 2-pane grid ── */}
+        <main className="onboarding-setup-main">
 
-                {jobId ? (
-                  <div className="mt-5 section-surface p-4">
-                    <div className="mb-3 flex items-center justify-between gap-4 text-sm">
-                      <span className="capitalize text-[var(--text-2)]">Status: {jobStatus}</span>
-                      <span className="text-[var(--text-3)]">{jobProgress}%</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-white/6">
-                      <div
-                        className="h-full rounded-full bg-[var(--grad-btn)] transition-all"
-                        style={{ width: `${jobProgress}%` }}
+          {/* ── LEFT: Controls ── */}
+          <section className="onboarding-setup-left section-surface">
+            <div className="onboarding-setup-left-header">
+              <h2>{currentStep.title}</h2>
+              <p>{currentStep.description}</p>
+            </div>
+
+            <div className={`onboarding-setup-left-body ${step === 3 ? 'is-launch-step' : ''}`}>
+
+              {/* Step 1 */}
+              {step === 1 ? (
+                <div className="onboarding-setup-stack onboarding-setup-stack-launch">
+                  <form onSubmit={handleAddUrl} className="onboarding-setup-stack">
+                    <div className="space-y-2">
+                      <Label htmlFor="source-url" className="text-sm font-semibold text-(--text-2)">
+                        Website URL
+                      </Label>
+                      <Input
+                        id="source-url"
+                        type="url"
+                        placeholder="https://example.com"
+                        value={hasPipelineData || hasActiveJob ? (sources[0]?.url || url) : url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        disabled={hasPipelineData || hasActiveJob}
+                        readOnly={hasPipelineData || hasActiveJob}
                       />
                     </div>
-                  </div>
-                ) : null}
+                    <Button type="submit" disabled={isSaving || hasPipelineData || hasActiveJob} className="w-full sm:w-auto">
+                      {isSaving ? 'Starting scrape...' : 'Start training'}
+                    </Button>
+                  </form>
 
-                <div className="mt-6 space-y-3">
-                  {sources.length === 0 ? (
-                    <div className="dashboard-empty">
-                      Add your first website source to unlock the rest of onboarding.
+                  <div className="onboarding-setup-mini-status">
+                    <span className="capitalize text-(--text-2)">Status: {jobStatus}</span>
+                    <span className="text-(--text-3)">{pipelineProgress}%</span>
+                  </div>
+
+                  <div className="onboarding-setup-divider" />
+
+                  <form onSubmit={handleUploadDocument} className="onboarding-setup-stack">
+                    <div className="flex items-center justify-between gap-3">
+                      <Label htmlFor="doc-upload" className="text-sm font-semibold text-(--text-2)">
+                        Optional docs upload
+                      </Label>
+                      <span className="text-xs text-(--text-3)">
+                        {docsUsed}/{planLimits.documents} docs
+                      </span>
                     </div>
-                  ) : (
-                    sources.map((source) => (
-                      <div key={source.id} className="section-surface p-4 text-sm text-[var(--text-1)]">
-                        {source.url}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="section-surface p-6">
-                <div className="mb-6 flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="mb-2 text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">
-                      Upload supporting docs
-                    </h2>
-                    <p className="m-0 text-sm leading-6 text-[var(--text-2)]">
-                      Add TXT or CSV files to give the assistant more internal product context.
-                    </p>
-                  </div>
-                  <div className="dashboard-chip">{docsUsed}/{planLimits.documents} docs used</div>
-                </div>
-
-                <form onSubmit={handleUploadDocument} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="doc-upload" className="text-sm font-semibold text-[var(--text-2)]">
-                      Upload TXT or CSV
-                    </Label>
                     <Input
                       id="doc-upload"
                       type="file"
                       accept=".txt,.csv,text/plain,text/csv"
                       onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
                     />
-                  </div>
-                  <Button type="submit" variant="outline" disabled={isUploading}>
-                    {isUploading ? 'Uploading...' : 'Upload document'}
-                  </Button>
-                </form>
+                    <Button type="submit" variant="outline" disabled={isUploading} className="w-full sm:w-auto">
+                      {isUploading ? 'Uploading...' : 'Upload document'}
+                    </Button>
+                  </form>
 
-                <div className="mt-6 space-y-3">
-                  {documents.length === 0 ? (
-                    <div className="dashboard-empty">
-                      Optional, but useful for product notes, internal FAQs, or structured content exports.
-                    </div>
-                  ) : (
-                    documents.map((doc) => (
-                      <div key={doc.id} className="section-surface p-4 text-sm text-[var(--text-1)]">
-                        {doc.fileName}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {step === 2 ? (
-            <div className="dashboard-grid-two">
-              <div className="section-surface p-6">
-                <div className="mb-6 flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="mb-2 text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">
-                      Style your widget
-                    </h2>
-                    <p className="m-0 text-sm leading-6 text-[var(--text-2)]">
-                      Match your product with cleaner colors, copy, and layout before launch.
-                    </p>
-                  </div>
-                  <div className="dashboard-chip">
-                    {widgetSaved ? 'Saved' : 'Unsaved'}
+                  <div className="onboarding-setup-meta">
+                    <span>{scrapedPagesUsed}/{planLimits.scrapedPages} pages connected</span>
+                    <span>{sources.length} source{sources.length === 1 ? '' : 's'}</span>
                   </div>
                 </div>
+              ) : null}
 
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-[var(--text-2)]">Widget name</Label>
-                    <Input
-                      value={widgetName}
-                      onChange={(e) => {
-                        setWidgetSaved(false);
-                        setWidgetName(e.target.value);
-                      }}
-                    />
-                  </div>
+              {/* Step 2 */}
+              {step === 2 ? (
+                <div className="ob-style-form">
 
-                  <div className="dashboard-grid-two">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-[var(--text-2)]">Primary color</Label>
+
+                  {/* Brand group */}
+                  <div className="ob-style-group">
+                    <span className="ob-style-group-label">Brand</span>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-(--text-3)">Widget name</Label>
                       <Input
-                        type="color"
+                        value={widgetName}
+                        onChange={(e) => { setWidgetSaved(false); setWidgetName(e.target.value); }}
+                        placeholder="My Chat Widget"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-(--text-3)">Bot name</Label>
+                      <Input
+                        value={widgetConfig.botName}
+                        onChange={(e) => updateWidgetConfig((p) => ({ ...p, botName: e.target.value }))}
+                        placeholder="Konvoq AI"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Colors group */}
+                  <div className="ob-style-group">
+                    <span className="ob-style-group-label">Colors</span>
+                    <div className="ob-color-row">
+                      <ColorField
+                        label="Primary"
                         value={widgetConfig.primaryColor}
-                        onChange={(e) => updateWidgetConfig((p) => ({ ...p, primaryColor: e.target.value }))}
+                        onChange={(v) => updateWidgetConfig((p) => ({ ...p, primaryColor: v }))}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-[var(--text-2)]">Background color</Label>
-                      <Input
-                        type="color"
+                      <ColorField
+                        label="Background"
                         value={widgetConfig.backgroundColor}
-                        onChange={(e) => updateWidgetConfig((p) => ({ ...p, backgroundColor: e.target.value }))}
+                        onChange={(v) => updateWidgetConfig((p) => ({ ...p, backgroundColor: v }))}
+                      />
+                      <ColorField
+                        label="Text"
+                        value={widgetConfig.textColor}
+                        onChange={(v) => updateWidgetConfig((p) => ({ ...p, textColor: v }))}
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-[var(--text-2)]">Text color</Label>
-                    <Input
-                      type="color"
-                      value={widgetConfig.textColor}
-                      onChange={(e) => updateWidgetConfig((p) => ({ ...p, textColor: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-[var(--text-2)]">Bot name</Label>
-                    <Input
-                      value={widgetConfig.botName}
-                      onChange={(e) => updateWidgetConfig((p) => ({ ...p, botName: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-[var(--text-2)]">Welcome message</Label>
-                    <Input
-                      value={widgetConfig.welcomeMessage}
-                      onChange={(e) => updateWidgetConfig((p) => ({ ...p, welcomeMessage: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-[var(--text-2)]">Logo URL</Label>
-                    <Input
-                      value={widgetConfig.logoUrl}
-                      onChange={(e) => updateWidgetConfig((p) => ({ ...p, logoUrl: e.target.value }))}
-                      placeholder="https://cdn.example.com/logo.png"
-                    />
-                  </div>
-
-                  <div className="dashboard-grid-two">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-[var(--text-2)]">Position</Label>
-                      <select
-                        className="h-11 w-full rounded-xl border border-white/10 bg-[color:var(--surface)] px-3.5 text-sm text-[var(--text-1)] shadow-[var(--shadow-card)] outline-none"
-                        value={widgetConfig.position}
-                        onChange={(e) => updateWidgetConfig((p) => ({ ...p, position: e.target.value }))}
-                      >
-                        <option value="bottom-right">Bottom right</option>
-                        <option value="bottom-left">Bottom left</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-[var(--text-2)]">Border radius</Label>
+                  {/* Content group */}
+                  <div className="ob-style-group">
+                    <span className="ob-style-group-label">Content</span>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-(--text-3)">Welcome message</Label>
                       <Input
-                        type="number"
-                        value={widgetConfig.borderRadius}
-                        onChange={(e) =>
-                          updateWidgetConfig((p) => ({ ...p, borderRadius: Number(e.target.value) || 24 }))
-                        }
+                        value={widgetConfig.welcomeMessage}
+                        onChange={(e) => updateWidgetConfig((p) => ({ ...p, welcomeMessage: e.target.value }))}
+                        placeholder="Hi! How can I help?"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-[var(--text-2)]">Font size</Label>
-                    <Input
-                      type="number"
-                      value={widgetConfig.fontSize}
-                      onChange={(e) =>
-                        updateWidgetConfig((p) => ({ ...p, fontSize: Number(e.target.value) || 14 }))
-                      }
-                    />
+                  {/* Actions */}
+                  <div className="ob-style-actions">
+                    <Button onClick={handleSaveWidget} disabled={isSavingWidget}>
+                      {isSavingWidget ? 'Saving...' : 'Save settings'}
+                    </Button>
+                    {autoBrand ? (
+                      <Button variant="outline" onClick={handleResetToAuto} title="Restore auto-detected brand">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Auto
+                      </Button>
+                    ) : null}
+                    <Button variant="ghost" onClick={handleResetToDefaults} title="Reset to default settings">
+                      Defaults
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Step 3 */}
+              {step === 3 ? (
+                <div className="ob-embed-step">
+                  {/* Code block */}
+                  <div className="ob-embed-code-wrap">
+                    <div className="ob-embed-code-header">
+                      <div className="ob-embed-code-label">
+                        <Code2 className="h-3.5 w-3.5" />
+                        <span>Your embed snippet</span>
+                      </div>
+                      <button
+                        className="ob-embed-copy-btn"
+                        onClick={async () => {
+                          if (!embedCode) return;
+                          await navigator.clipboard.writeText(embedCode);
+                          toast.success('Copied to clipboard!');
+                        }}
+                        disabled={!embedCode}
+                      >
+                        <Copy className="h-3 w-3" />
+                        Copy code
+                      </button>
+                    </div>
+                    <pre className="ob-embed-code-pre">
+                      <code>{embedCode || '<script src="…"></script>'}</code>
+                    </pre>
                   </div>
 
-                  <Button onClick={handleSaveWidget} className="w-full" disabled={isSavingWidget}>
-                    {isSavingWidget ? 'Saving widget...' : 'Save widget settings'}
-                  </Button>
-                </div>
-              </div>
+                  {/* Install instructions */}
+                  <div className="ob-embed-instructions">
+                    {[
+                      { n: '1', title: 'Paste the snippet', detail: 'Add it before the closing </body> tag on every page you want the widget' },
+                      { n: '2', title: 'Widget goes live instantly', detail: 'No build step, no bundler, no restart — it just works' },
+                      { n: '3', title: 'Customize anytime', detail: 'Edit colors, name, and messages from your dashboard at any time' },
+                    ].map((item) => (
+                      <div key={item.n} className="ob-embed-instruction-row">
+                        <span className="ob-embed-instruction-num">{item.n}</span>
+                        <div className="ob-embed-instruction-content">
+                          <span className="ob-embed-instruction-title">{item.title}</span>
+                          <span className="ob-embed-instruction-detail">{item.detail}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
-              <div className="section-surface p-6">
-                <div className="mb-6">
-                  <h2 className="mb-2 text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">
-                    Live preview
-                  </h2>
-                  <p className="m-0 text-sm leading-6 text-[var(--text-2)]">
-                    Preview the widget using the same backend renderer your production snippet uses.
-                  </p>
+                  {/* Ready status chips */}
+                  <div className="ob-embed-ready-row">
+                    {['Source connected', 'Widget saved', 'Code ready'].map((label) => (
+                      <div key={label} className="ob-embed-ready-chip">
+                        <Check className="h-3 w-3" />
+                        {label}
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              ) : null}
+            </div>
+
+            <footer className="onboarding-setup-footer">
+              <Button
+                variant="ghost"
+                disabled={step === 1}
+                onClick={() => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s))}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+
+              {step < 3 ? (
+                <Button
+                  title={step === 2 && !widgetSaved ? 'Save your widget configuration to continue' : undefined}
+                  disabled={(step === 1 && !canProceedStep1) || (step === 2 && !widgetSaved)}
+                  onClick={() => void goToStep((step + 1) as 1 | 2 | 3)}
+                >
+                  Next step
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button onClick={handleDone}>
+                  Go to Dashboard
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
+            </footer>
+          </section>
+
+          {/* ── RIGHT: Live preview (step 2) | Platforms (step 3) | Pipeline (step 1) ── */}
+          {step === 2 ? (
+            <aside className="onboarding-setup-right onboarding-setup-right--preview section-surface">
+              <div className="ob-preview-head">
+                <span>Live preview</span>
+                <span className="ob-preview-hint">Updates as you edit</span>
+              </div>
+              <div className="ob-preview-frame">
                 <iframe
                   ref={iframeRef}
                   src={widgetPreviewURL}
-                  className="h-[540px] w-full rounded-[24px] border border-white/8 bg-white"
+                  title="Widget preview"
                   onLoad={() => {
                     setIframeReady(true);
                     postWidgetConfig(widgetConfig);
                   }}
                 />
               </div>
-            </div>
-          ) : null}
-
-          {step === 3 ? (
-            <div className="dashboard-grid-two">
-              <div className="section-surface p-6">
-                <div className="mb-6">
-                  <h2 className="mb-2 text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">
-                    Install snippet
-                  </h2>
-                  <p className="m-0 text-sm leading-6 text-[var(--text-2)]">
-                    Paste this before the closing body tag on your website to launch the widget.
-                  </p>
-                </div>
-
-                <pre className="dashboard-code-block">
-                  {embedCode || 'Save your widget settings to generate the embed code.'}
-                </pre>
-
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={async () => {
-                      if (!embedCode) return;
-                      await navigator.clipboard.writeText(embedCode);
-                      toast.success('Embed code copied');
-                    }}
+            </aside>
+          ) : step === 3 ? (
+            <aside className="onboarding-setup-right ob-platforms-aside section-surface">
+              <div className="ob-platforms-head">
+                <h3>Install on any platform</h3>
+                <p>Works with any website - click a platform for guided setup.</p>
+              </div>
+              <div className="ob-platforms-grid">
+                {platformList.map((p) => (
+                  <button
+                    key={p.name}
+                    type="button"
+                    className="ob-platform-tile"
+                    onClick={() => setActivePlatform(p)}
+                    title={`Open ${p.name} instructions`}
                   >
-                    Copy embed code
-                  </Button>
-                  <a
-                    href="/dashboard"
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[color:var(--surface)] px-4 py-2.5 text-sm font-semibold text-[var(--text-1)] no-underline shadow-[var(--shadow-card)]"
-                  >
-                    Open dashboard
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </div>
+                    <span className="ob-platform-icon-badge" style={{ background: `${p.color}1e`, borderColor: `${p.color}50` }}>
+                      {logoFallback[p.name] ? (
+                        <span className="ob-platform-icon-fallback">{p.abbr}</span>
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.logo}
+                          alt={`${p.name} logo`}
+                          className="ob-platform-icon-img"
+                          onError={() => setLogoFallback((prev) => ({ ...prev, [p.name]: true }))}
+                        />
+                      )}
+                    </span>
+                    <span className="ob-platform-name">{p.name}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="ob-platforms-hint">No plugin or API key needed - one script tag, instant results.</p>
+            </aside>
+          ) : (
+            <aside className={`onboarding-setup-right section-surface ob-stage-${pipelineStage} ${pipelineStage === 'failed' ? 'is-failed' : ''}`}>
+              <div className="onboarding-setup-right-head">
+                <h3>Pipeline status</h3>
+                <p>{stageLabel[pipelineStage]}</p>
               </div>
 
-              <div className="section-surface p-6">
-                <div className="mb-6">
-                  <h2 className="mb-2 text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">
-                    Final launch checklist
-                  </h2>
-                  <p className="m-0 text-sm leading-6 text-[var(--text-2)]">
-                    Finish these checks, then complete onboarding and start managing the product from the dashboard.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    'At least one website source is connected',
-                    'Widget settings are saved',
-                    'Embed code is ready to install',
-                  ].map((item) => (
-                    <div key={item} className="section-surface flex items-center gap-3 p-4">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-muted)] text-[var(--accent-strong)]">
+              <div className="ob-simple-list">
+                {checklistItems.map((item) => (
+                  <div key={item.id} className={`ob-simple-item ${item.state}`}>
+                    <div className="ob-simple-icon">
+                      {item.state === 'done' ? (
                         <Check className="h-4 w-4" />
-                      </div>
-                      <span className="text-sm text-[var(--text-1)]">{item}</span>
+                      ) : item.state === 'failed' ? (
+                        <AlertTriangle className="h-4 w-4" />
+                      ) : (
+                        <Circle className="h-4 w-4" />
+                      )}
                     </div>
-                  ))}
-                </div>
+                    <div className="ob-simple-copy">
+                      <p>{item.label}</p>
+                      <span>{item.description}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-                <Button className="mt-6 w-full" onClick={handleDone}>
-                  Complete onboarding
-                </Button>
+              <div className="ob-simple-progress">
+                <div className="ob-simple-progress-track">
+                  <div className="ob-simple-progress-fill" style={{ width: `${pipelineProgress}%` }} />
+                </div>
+                <span>{pipelineProgress}% complete</span>
+              </div>
+
+              <div className="ob-right-ctx">
+                {pipelineStage === 'done' ? (
+                  <div className="onboarding-setup-right-status done">
+                    <Check className="h-4 w-4" />
+                    <span>All training data has been prepared.</span>
+                  </div>
+                ) : pipelineStage === 'failed' ? (
+                  <div className="onboarding-setup-right-status failed">
+                    <span>Latest training attempt failed. Add another source to retry.</span>
+                  </div>
+                ) : (
+                  <p className="ob-ctx-hint">
+                    {isScrapingState
+                      ? 'Collecting and processing your website pages.'
+                      : isIndexingState
+                        ? 'Building the knowledge index.'
+                        : step === 1 && !hasPipelineData
+                          ? 'Add a website URL above to begin training your assistant.'
+                          : 'Processing can take up to 2 minutes. Please wait.'}
+                  </p>
+                )}
+              </div>
+            </aside>
+          )}
+        </main>
+
+        {activePlatform ? (
+          <div
+            className="ob-install-modal-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${activePlatform.name} installation guide`}
+            onClick={() => setActivePlatform(null)}
+          >
+            <div className="ob-install-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="ob-install-modal-head">
+                <div className="ob-install-modal-title">
+                  {logoFallback[activePlatform.name] ? (
+                    <span className="ob-install-modal-logo-fallback">{activePlatform.abbr}</span>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={activePlatform.logo}
+                      alt={`${activePlatform.name} logo`}
+                      className="ob-install-modal-logo"
+                      onError={() => setLogoFallback((prev) => ({ ...prev, [activePlatform.name]: true }))}
+                    />
+                  )}
+                  <div>
+                    <h4>{activePlatform.name} installation guide</h4>
+                    <p>Follow these steps to install your widget.</p>
+                  </div>
+                </div>
+                <button type="button" className="ob-install-close" onClick={() => setActivePlatform(null)}>
+                  Close
+                </button>
+              </div>
+
+              <div className="ob-install-script-block">
+                <span>Embed script</span>
+                <pre>
+                  <code>{embedCode || '<script src="..."></script>'}</code>
+                </pre>
+              </div>
+
+              <div className="ob-install-steps">
+                {(platformInstructions.length ? platformInstructions : ['Paste the script before closing body tag and publish your site.']).map((item, idx) => (
+                  <div key={`${activePlatform.name}-${idx}`} className="ob-install-step-row">
+                    <span>{idx + 1}</span>
+                    <p>{item}</p>
+                  </div>
+                ))}
               </div>
             </div>
-          ) : null}
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <Button
-              variant="ghost"
-              disabled={step === 1}
-              onClick={() => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s))}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-
-            {step < 3 ? (
-              <Button
-                title={step === 2 && !widgetSaved ? 'Save your widget configuration to continue' : undefined}
-                disabled={(step === 1 && !canProceedStep1) || (step === 2 && !widgetSaved)}
-                onClick={() => void goToStep((step + 1) as 1 | 2 | 3)}
-              >
-                Next step
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            ) : null}
           </div>
-        </div>
+        ) : null}
       </div>
     </div>
   );
 }
+
