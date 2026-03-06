@@ -4327,3 +4327,651 @@ body::after {
     gap: 16px;
   }
 }
+
+/* ─────────────────────────────────────────────────────
+   Dashboard Shell — ds-* classes
+───────────────────────────────────────────────────── */
+
+.ds-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-1);
+}
+
+/* ── Top bar ── */
+.ds-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex-shrink: 0;
+}
+
+.ds-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ds-topbar-sep {
+  color: var(--text-3);
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+.ds-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: -0.02em;
+}
+
+.ds-brand svg {
+  color: var(--accent-strong);
+}
+
+.ds-workspace-name {
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.ds-plan-tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--accent-muted);
+  color: var(--accent-strong);
+  text-transform: uppercase;
+}
+
+.ds-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ds-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-muted);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ds-user-avatar:hover {
+  background: color-mix(in srgb, var(--accent-muted) 120%, transparent);
+}
+
+/* ── Body layout ── */
+.ds-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Sidebar ── */
+.ds-sidebar {
+  width: 236px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  position: sticky;
+  top: 52px;
+  height: calc(100vh - 52px);
+  overflow-y: auto;
+}
+
+.ds-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 10px;
+  flex: 1;
+}
+
+.ds-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ds-nav-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-1);
+}
+
+.ds-nav-item[data-active='true'] {
+  background: color-mix(in srgb, var(--accent-muted) 45%, transparent);
+  border-color: color-mix(in srgb, var(--accent-strong) 35%, rgba(255, 255, 255, 0.06));
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.ds-nav-item svg {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.ds-nav-item[data-active='true'] svg {
+  opacity: 1;
+}
+
+/* ── Sidebar footer ── */
+.ds-sidebar-footer {
+  padding: 12px 10px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ds-usage-meter {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ds-usage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.ds-usage-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ds-upgrade-btn {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-strong);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s;
+}
+
+.ds-upgrade-btn:hover {
+  opacity: 0.75;
+}
+
+.ds-usage-count {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: -0.02em;
+  margin-bottom: 2px;
+}
+
+.ds-usage-reset {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.ds-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--text-3);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.ds-logout-btn:hover {
+  background: rgba(255, 60, 60, 0.08);
+  color: #ff6b6b;
+}
+
+/* ── Main content ── */
+.ds-main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.ds-section-wrap {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ── Section page headers ── */
+.ds-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.ds-page-header-simple {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ds-page-title {
+  font-size: clamp(28px, 3.2vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--text-1);
+  margin: 0;
+  line-height: 1.05;
+}
+
+.ds-page-subtitle {
+  font-size: 14px;
+  color: var(--text-3);
+  margin: 0;
+  max-width: 620px;
+}
+
+/* ── Chatbot status pill ── */
+.ds-chatbot-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 24px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.ds-chatbot-name {
+  color: var(--text-2);
+}
+
+.ds-active-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+  animation: ds-pulse 2s infinite;
+}
+
+@keyframes ds-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.ds-active-label {
+  color: #22c55e;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ── Metric grid ── */
+.ds-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.ds-metric-card {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 148px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ds-metric-card:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+}
+
+.ds-metric-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ds-metric-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+  letter-spacing: 0.01em;
+}
+
+.ds-metric-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--accent-muted);
+  color: var(--accent-strong);
+  border: 1px solid color-mix(in srgb, var(--accent-strong) 28%, transparent);
+}
+
+.ds-metric-value {
+  font-size: clamp(30px, 2.2vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: var(--text-1);
+  line-height: 1;
+}
+
+.ds-metric-desc {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-3);
+}
+
+/* ── Embed strip ── */
+.ds-embed-strip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.ds-embed-strip-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--accent-strong);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ds-embed-strip-code {
+  flex: 1;
+  font-family: 'Geist Mono', monospace;
+  font-size: 12px;
+  color: var(--text-2);
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(8, 10, 14, 0.75);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.ds-embed-strip-copy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.ds-embed-strip-copy:hover:not(:disabled) {
+  background: var(--accent-muted);
+  border-color: color-mix(in srgb, var(--accent-strong) 34%, rgba(255, 255, 255, 0.14));
+  color: var(--accent-strong);
+}
+
+.ds-embed-strip-copy:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Analytics grid ── */
+.ds-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.ds-anl-card {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ds-conv-health {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ds-anl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ds-anl-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ds-anl-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-3);
+}
+
+.ds-anl-icon--accent {
+  background: var(--accent-muted);
+  color: var(--accent-strong);
+}
+
+.ds-anl-value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--text-1);
+  line-height: 1;
+}
+
+.ds-anl-desc {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* Conversation health rows */
+.ds-health-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ds-health-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.ds-health-val {
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.ds-health-bar-wrap {
+  padding: 2px 0;
+}
+
+.ds-health-bar {
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.ds-health-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent-strong);
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+
+.ds-health-meta {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+/* ── Activity chart card ── */
+.ds-chart-card {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ds-chart-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ds-chart-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-1);
+  margin: 0;
+}
+
+.ds-chart-svg {
+  width: 100%;
+  height: 160px;
+  display: block;
+}
+
+/* ── Two-column layout ── */
+.ds-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .ds-metric-grid,
+  .ds-analytics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .ds-sidebar {
+    display: none;
+  }
+
+  .ds-metric-grid,
+  .ds-analytics-grid,
+  .ds-two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .ds-section-wrap {
+    padding: 20px 16px 24px;
+    gap: 24px;
+  }
+
+  .ds-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ds-embed-strip {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .ds-embed-strip-label {
+    width: 100%;
+  }
+
+  .ds-embed-strip-copy {
+    width: 100%;
+    justify-content: center;
+  }
+}

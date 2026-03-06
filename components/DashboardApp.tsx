@@ -37,7 +37,8 @@ type DashboardSection =
   | 'widget'
   | 'embed'
   | 'chat'
-  | 'feedback';
+  | 'feedback'
+  | 'intent';
 
 interface SourceItem {
   id?: string;
@@ -141,45 +142,62 @@ const sections: Array<{
   id: DashboardSection;
   label: string;
   icon: typeof LayoutDashboard;
-  description: string;
 }> = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    icon: LayoutDashboard,
-    description: 'Monitor rollout, usage, and momentum.',
-  },
-  {
-    id: 'sources',
-    label: 'Sources',
-    icon: BookOpenText,
-    description: 'Manage website pages and uploaded docs.',
-  },
-  {
-    id: 'widget',
-    label: 'Widget',
-    icon: Settings2,
-    description: 'Tune styling, copy, and product fit.',
-  },
-  {
-    id: 'embed',
-    label: 'Install',
-    icon: PanelRight,
-    description: 'Copy the live script and launch.',
-  },
-  {
-    id: 'chat',
-    label: 'Conversations',
-    icon: MessagesSquare,
-    description: 'Review recent customer sessions.',
-  },
-  {
-    id: 'feedback',
-    label: 'Feedback',
-    icon: MessageSquare,
-    description: 'Track suggestions and product friction.',
-  },
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'widget', label: 'Craft Console', icon: Settings2 },
+  { id: 'sources', label: 'Data Sources', icon: BookOpenText },
+  { id: 'chat', label: 'Chat History', icon: MessagesSquare },
+  { id: 'intent', label: 'Customer Intent', icon: BarChart3 },
+  { id: 'feedback', label: 'Feedback', icon: MessageSquare },
+  { id: 'embed', label: 'Embed Code', icon: PanelRight },
 ];
+
+function ActivityChart({ data }: { data: { label: string; value: number }[] }) {
+  const maxVal = Math.max(...data.map((d) => d.value), 8);
+  const W = 800, H = 180, pL = 36, pR = 16, pT = 16, pB = 36;
+  const iW = W - pL - pR, iH = H - pT - pB;
+  const pts = data.map((d, i) => ({
+    x: pL + (i / Math.max(data.length - 1, 1)) * iW,
+    y: pT + (1 - d.value / maxVal) * iH,
+  }));
+  const linePath = pts.reduce((p, pt, i) => {
+    if (i === 0) return `M ${pt.x} ${pt.y}`;
+    const prev = pts[i - 1];
+    const cx = (prev.x + pt.x) / 2;
+    return `${p} C ${cx} ${prev.y}, ${cx} ${pt.y}, ${pt.x} ${pt.y}`;
+  }, '');
+  const areaPath = pts.length
+    ? `${linePath} L ${pts[pts.length - 1].x} ${pT + iH} L ${pL} ${pT + iH} Z`
+    : '';
+  const gridVals = [0, Math.round(maxVal * 0.5), maxVal];
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="ds-chart-svg" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="dsChartGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--accent-strong)" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="var(--accent-strong)" stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      {gridVals.map((v, gi) => {
+        const gy = pT + (1 - v / maxVal) * iH;
+        return (
+          <g key={gi}>
+            <line x1={pL} x2={W - pR} y1={gy} y2={gy} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+            <text x={pL - 5} y={gy + 4} textAnchor="end" fill="rgba(255,255,255,0.28)" fontSize="9">{v}</text>
+          </g>
+        );
+      })}
+      {areaPath && <path d={areaPath} fill="url(#dsChartGrad)" />}
+      {linePath && <path d={linePath} fill="none" stroke="var(--accent-strong)" strokeWidth="2" strokeOpacity="0.85" strokeLinejoin="round" strokeLinecap="round" />}
+      {pts.map((pt, i) => (
+        <g key={i}>
+          <circle cx={pt.x} cy={pt.y} r="3.5" fill="var(--accent-strong)" opacity="0.9" />
+          <text x={pt.x} y={H - 4} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="9">{data[i].label}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
 
 function getErrorMessage(error: unknown, fallback: string) {
   const maybe = error as {
@@ -237,7 +255,7 @@ export function DashboardApp() {
 
   const [activeSection, setActiveSection] = useState<DashboardSection>('overview');
   const [isBooting, setIsBooting] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [, setIsRefreshing] = useState(false);
 
   const [usage, setUsage] = useState<UsageRecord>({});
   const [analytics, setAnalytics] = useState<AnalyticsRecord>({});
@@ -533,15 +551,38 @@ export function DashboardApp() {
     },
   ];
 
-  const readinessCount = readinessItems.filter((item) => item.complete).length;
   const usageLimit = usage.conversationsLimit;
   const usageRemaining = usage.conversationsRemaining;
   const usagePercent =
     usageLimit && usageLimit > 0
       ? Math.min(100, Math.round(((usage.conversationsUsed ?? 0) / usageLimit) * 100))
       : 0;
-  const selectedSection = sections.find((section) => section.id === activeSection) || sections[0];
-  const SelectedSectionIcon = selectedSection.icon;
+  const conversationHealthScore = usageLimit && usageLimit > 0 ? Math.max(0, 100 - usagePercent) : 100;
+  const conversationHealthValue = usageLimit && usageLimit > 0 ? `${conversationHealthScore}%` : '100%';
+  const conversationHealthDetail =
+    usageRemaining === null || usageRemaining === undefined
+      ? 'Unlimited conversation capacity'
+      : `${formatNumber(usageRemaining)} conversations remaining`;
+
+  // Chart data — last 7 days
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toISOString().slice(0, 10);
+  });
+  const eventsByDay = widgetAnalytics.reduce((acc, item) => {
+    const day = item.createdAt?.slice(0, 10);
+    if (day && last7Days.includes(day)) acc[day] = (acc[day] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const chartData = last7Days.map((day) => ({
+    label: new Date(day + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    value: eventsByDay[day] || 0,
+  }));
+  const activeDays7d = Object.keys(eventsByDay).length;
+  const planType = (usage.planType || user?.plan_type || 'free').toString();
+  const workspaceName = user?.fullName || user?.email?.split('@')[0] || 'Workspace';
+  const userInitial = (user?.fullName || user?.email || 'U')[0].toUpperCase();
 
   if (isLoading || isBooting) {
     return (
@@ -559,152 +600,200 @@ export function DashboardApp() {
   }
 
   return (
-    <div className="dashboard-shell min-h-screen">
-      <div className="dashboard-layout">
-        <aside className="dashboard-sidebar section-frame">
-          <div className="relative z-10 space-y-6">
-            <div className="space-y-4">
-              <div className="dashboard-kicker">
-                <Sparkles className="h-3.5 w-3.5 text-[var(--accent-strong)]" />
-                Konvoq AI
-              </div>
+    <div className="ds-root">
 
-              <div>
-                <div className="mb-2 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-[color:var(--surface)] shadow-[var(--shadow-card)]">
-                    <Bot className="h-5 w-5 text-[var(--accent-strong)]" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-[var(--text-1)]">{user.email}</div>
-                    <div className="text-xs text-[var(--text-3)]">
-                      {(usage.planType || user.plan_type || 'free').toString().toUpperCase()} PLAN
-                    </div>
-                  </div>
-                </div>
-                <p className="m-0 text-sm leading-6 text-[var(--text-2)]">
-                  Same visual language as the website, tuned for daily product operations.
-                </p>
+      {/* ── Top navbar ── */}
+      <header className="ds-topbar">
+        <div className="ds-topbar-left">
+          <div className="ds-brand">
+            <Sparkles className="h-4 w-4" />
+            <span>Konvoq</span>
+          </div>
+          <span className="ds-topbar-sep">/</span>
+          <span className="ds-workspace-name">{workspaceName}&apos;s Workspace</span>
+          <span className="ds-plan-tag">{planType.charAt(0).toUpperCase() + planType.slice(1)}</span>
+        </div>
+        <div className="ds-topbar-right">
+          <button type="button" className="ds-user-avatar" title={user.email}>
+            {userInitial}
+          </button>
+        </div>
+      </header>
+
+      {/* ── Body: sidebar + main ── */}
+      <div className="ds-body">
+
+        {/* Sidebar */}
+        <aside className="ds-sidebar">
+          <nav className="ds-nav">
+            {sections.map((section) => {
+              const Icon = section.icon;
+              return (
+                <button
+                  key={section.id}
+                  type="button"
+                  className="ds-nav-item"
+                  data-active={activeSection === section.id}
+                  onClick={() => setActiveSection(section.id)}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{section.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="ds-sidebar-footer">
+            <div className="ds-usage-meter">
+              <div className="ds-usage-header">
+                <span className="ds-usage-title">Conversations Left</span>
+                <button type="button" className="ds-upgrade-btn">Upgrade</button>
               </div>
+              <div className="ds-usage-count">
+                {formatNumber(usage.conversationsUsed ?? 0)} / {usageLimit === null || usageLimit === undefined ? '∞' : formatNumber(usageLimit)}
+              </div>
+              {usage.resetDate && (
+                <div className="ds-usage-reset">Reset: {formatDate(usage.resetDate)}</div>
+              )}
             </div>
-
-            <div className="section-divider" />
-
-            <nav className="space-y-1.5">
-              {sections.map((section) => {
-                const Icon = section.icon;
-                return (
-                  <button
-                    key={section.id}
-                    type="button"
-                    className="dashboard-nav-button"
-                    data-active={activeSection === section.id}
-                    onClick={() => setActiveSection(section.id)}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold">{section.label}</span>
-                      <span className="block truncate text-xs text-[var(--text-3)]">
-                        {section.description}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </nav>
-
-            <div className="section-divider" />
-
-            <div className="space-y-3">
-              <div className="section-surface p-4">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-3)]">
-                  Launch progress
-                </div>
-                <div className="mb-3 text-2xl font-bold tracking-[-0.05em] text-[var(--text-1)]">
-                  {readinessCount}/4 ready
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-white/6">
-                  <div
-                    className="h-full rounded-full bg-[var(--grad-btn)] transition-all"
-                    style={{ width: `${(readinessCount / 4) * 100}%` }}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => void loadDashboardData('refresh')}>
-                  {isRefreshing ? 'Refreshing...' : 'Refresh'}
-                </Button>
-                <Button variant="ghost" className="flex-1" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </Button>
-              </div>
-            </div>
+            <button type="button" className="ds-logout-btn" onClick={handleLogout}>
+              <LogOut className="h-3.5 w-3.5" />
+              Sign out
+            </button>
           </div>
         </aside>
 
-        <main className="dashboard-content">
-          <div className="section-frame overflow-hidden px-6 py-6 sm:px-8 sm:py-8">
-            <div className="relative z-10 space-y-8">
-              <div className="dashboard-page-header">
-                <div className="space-y-4">
-                  <div className="dashboard-kicker">
-                    <SelectedSectionIcon className="h-3.5 w-3.5 text-[var(--accent-strong)]" />
-                    {selectedSection.label}
-                  </div>
-                  <div>
-                    <h1 className="dashboard-panel-title">
-                      {activeSection === 'overview' &&
-                        'Run Konvoq like a product, not a prototype.'}
-                      {activeSection === 'sources' &&
-                        'Keep your knowledge layer clean and current.'}
-                      {activeSection === 'widget' &&
-                        'Tune the assistant until it feels on-brand.'}
-                      {activeSection === 'embed' &&
-                        'Install once, then launch with confidence.'}
-                      {activeSection === 'chat' &&
-                        'Review live conversations without leaving the product.'}
-                      {activeSection === 'feedback' &&
-                        'Turn customer signals into the next improvements.'}
-                    </h1>
-                    <p className="dashboard-panel-copy max-w-3xl">
-                      {activeSection === 'overview' &&
-                        'Track readiness, usage, and rollout signals from one aligned dashboard surface.'}
-                      {activeSection === 'sources' &&
-                        'Manage website pages and supporting docs so the assistant stays grounded in the right context.'}
-                      {activeSection === 'widget' &&
-                        'Adjust colors, copy, and details so the widget feels native to the rest of your SaaS product.'}
-                      {activeSection === 'embed' &&
-                        'Use the production script, follow the install steps, and move from setup to a live site quickly.'}
-                      {activeSection === 'chat' &&
-                        'Inspect session previews, open full transcripts, and understand how the assistant is performing in the field.'}
-                      {activeSection === 'feedback' &&
-                        'See what users are asking for, where they get stuck, and what the product should improve next.'}
-                    </p>
-                  </div>
-                </div>
+        {/* Main content */}
+        <main className="ds-main">
 
-                <div className="dashboard-meta-row">
-                  <div className="dashboard-chip">
-                    <Globe2 className="h-3.5 w-3.5" />
-                    {formatNumber(stats.scrapedPages ?? analytics.sources)} pages trained
-                  </div>
-                  <div className="dashboard-chip">
-                    <FileText className="h-3.5 w-3.5" />
-                    {formatNumber(documents.length)} docs
-                  </div>
-                  <div className="dashboard-chip">
-                    <MessagesSquare className="h-3.5 w-3.5" />
-                    {formatNumber(analytics.chatSessions)} chats
-                  </div>
-                  <div className="dashboard-chip">
-                    <BarChart3 className="h-3.5 w-3.5" />
-                    {formatNumber(analytics.widgetViews)} widget views
-                  </div>
+          {/* ── Overview ── */}
+          {activeSection === 'overview' ? (
+            <div className="ds-section-wrap">
+
+              <div className="ds-page-header">
+                <div className="ds-page-header-simple">
+                  <h1 className="ds-page-title">Dashboard Overview</h1>
+                  <p className="ds-page-subtitle">
+                    Live performance metrics, conversations, and activity trends.
+                  </p>
+                </div>
+                <div className="ds-chatbot-pill">
+                  <span className="ds-active-label">● Active</span>
                 </div>
               </div>
 
-              {activeSection === 'overview' ? (
+              <div className="ds-metric-grid">
+                {[
+                  {
+                    label: 'Knowledge Pages',
+                    value: formatNumber(stats.scrapedPages),
+                    desc: 'Total pages available for assistant responses',
+                    icon: BookOpenText,
+                  },
+                  {
+                    label: 'Messages',
+                    value: formatNumber(analytics.widgetMessages),
+                    desc: 'Total assistant and visitor messages',
+                    icon: MessageSquare,
+                  },
+                  {
+                    label: 'Unique Visitors',
+                    value: formatNumber(analytics.leads),
+                    desc: 'Distinct visitor interactions recorded',
+                    icon: Globe2,
+                  },
+                  {
+                    label: 'Total Sessions',
+                    value: formatNumber(analytics.chatSessions),
+                    desc: 'Total chatbot sessions across your workspace',
+                    icon: MessagesSquare,
+                  },
+                ].map((card) => (
+                  <div key={card.label} className="ds-metric-card">
+                    <div className="ds-metric-card-head">
+                      <span className="ds-metric-label">{card.label}</span>
+                      <div className="ds-metric-icon">
+                        <card.icon className="h-4 w-4" />
+                      </div>
+                    </div>
+                    <div className="ds-metric-value">{card.value}</div>
+                    <div className="ds-metric-desc">{card.desc}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="ds-embed-strip">
+                <span className="ds-embed-strip-label">Embed Script</span>
+                <div className="ds-embed-strip-code">
+                  {embedCode || '<script src="https://your-domain.com/api/v1/embed/your-key.js"></script>'}
+                </div>
+                <button
+                  type="button"
+                  className="ds-embed-strip-copy"
+                  disabled={!embedCode}
+                  onClick={async () => {
+                    if (!embedCode) return;
+                    await navigator.clipboard.writeText(embedCode);
+                    toast.success('Embed code copied');
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy Code
+                </button>
+              </div>
+
+              <div className="ds-analytics-grid">
+                {[
+                  {
+                    label: 'Avg Session Duration',
+                    value: '0 Min',
+                    desc: 'Average session lifetime',
+                    icon: Activity,
+                  },
+                  {
+                    label: 'Bounce Rate',
+                    value: '0%',
+                    desc: 'Share of sessions with no chat activity',
+                    icon: BarChart3,
+                  },
+                  {
+                    label: 'Active Days (7d)',
+                    value: formatNumber(activeDays7d),
+                    desc: 'Days with at least one tracked event',
+                    icon: MessagesSquare,
+                  },
+                  {
+                    label: 'Conversation Health',
+                    value: conversationHealthValue,
+                    desc: conversationHealthDetail,
+                    icon: Bot,
+                  },
+                ].map((card) => (
+                  <div key={card.label} className="ds-metric-card">
+                    <div className="ds-metric-card-head">
+                      <span className="ds-metric-label">{card.label}</span>
+                      <div className="ds-metric-icon">
+                        <card.icon className="h-4 w-4" />
+                      </div>
+                    </div>
+                    <div className="ds-metric-value">{card.value}</div>
+                    <div className="ds-metric-desc">{card.desc}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="ds-chart-card">
+                <div className="ds-chart-header">
+                  <Activity className="h-4 w-4 text-[var(--accent-strong)]" />
+                  <h2 className="ds-chart-title">Last 7 Days Activity</h2>
+                </div>
+                <ActivityChart data={chartData} />
+              </div>
+
+            </div>
+          ) : null}
+
+              {false ? (
                 <div className="space-y-6">
                   <div className="dashboard-grid-four">
                     {[
@@ -938,8 +1027,14 @@ export function DashboardApp() {
                 </div>
               ) : null}
 
-              {activeSection === 'sources' ? (
-                <div className="dashboard-grid-two">
+          {/* ── Data Sources ── */}
+          {activeSection === 'sources' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Data Sources</h1>
+                <p className="ds-page-subtitle">Manage website pages and uploaded docs so the assistant stays grounded in the right context.</p>
+              </div>
+              <div className="ds-two-col">
                   <div className="section-surface p-6">
                     <div className="mb-6 flex items-start justify-between gap-4">
                       <div>
@@ -1077,10 +1172,17 @@ export function DashboardApp() {
                     </div>
                   </div>
                 </div>
-              ) : null}
+            </div>
+          ) : null}
 
-              {activeSection === 'widget' ? (
-                <div className="dashboard-grid-two">
+          {/* ── Craft Console (Widget) ── */}
+          {activeSection === 'widget' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Craft Console</h1>
+                <p className="ds-page-subtitle">Tune the assistant until it feels on-brand and on-product.</p>
+              </div>
+              <div className="ds-two-col">
                   <div className="section-surface p-6">
                     <div className="mb-6 flex items-start justify-between gap-4">
                       <div>
@@ -1320,10 +1422,17 @@ export function DashboardApp() {
                     </div>
                   </div>
                 </div>
-              ) : null}
+              </div>
+          ) : null}
 
-              {activeSection === 'embed' ? (
-                <div className="dashboard-grid-two">
+          {/* ── Embed Code ── */}
+          {activeSection === 'embed' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Embed Code</h1>
+                <p className="ds-page-subtitle">Install the production script and go live with confidence.</p>
+              </div>
+              <div className="ds-two-col">
                   <div className="section-surface p-6">
                     <div className="mb-6">
                       <h2 className="mb-2 text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">
@@ -1401,19 +1510,26 @@ export function DashboardApp() {
                     </div>
                   </div>
                 </div>
-              ) : null}
+            </div>
+          ) : null}
 
-              {activeSection === 'chat' ? (
-                <div className="dashboard-grid-two">
-                  <div className="section-surface p-6">
-                    <div className="mb-6">
-                      <h2 className="mb-2 text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">
-                        Recent sessions
-                      </h2>
-                      <p className="m-0 text-sm leading-6 text-[var(--text-2)]">
-                        Open any conversation to inspect how the assistant performed.
-                      </p>
-                    </div>
+          {/* ── Chat History ── */}
+          {activeSection === 'chat' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Chat History</h1>
+                <p className="ds-page-subtitle">Review conversations between the assistant and your visitors.</p>
+              </div>
+              <div className="ds-two-col">
+                <div className="section-surface p-6">
+                  <div className="mb-6">
+                    <h2 className="mb-2 text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">
+                      Recent sessions
+                    </h2>
+                    <p className="m-0 text-sm leading-6 text-[var(--text-2)]">
+                      Open any conversation to inspect how the assistant performed.
+                    </p>
+                  </div>
 
                     {chatSessions.length === 0 ? (
                       <div className="dashboard-empty">
@@ -1505,10 +1621,17 @@ export function DashboardApp() {
                     )}
                   </div>
                 </div>
-              ) : null}
+            </div>
+          ) : null}
 
-              {activeSection === 'feedback' ? (
-                <div className="space-y-6">
+          {/* ── Feedback ── */}
+          {activeSection === 'feedback' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Feedback</h1>
+                <p className="ds-page-subtitle">Customer suggestions and notes collected from the widget.</p>
+              </div>
+              <div className="space-y-6">
                   <div className="dashboard-grid-three">
                     <div className="section-surface p-5">
                       <div className="mb-2 text-sm text-[var(--text-2)]">Total entries</div>
@@ -1568,9 +1691,43 @@ export function DashboardApp() {
                     )}
                   </div>
                 </div>
-              ) : null}
+              </div>
+          ) : null}
+
+          {/* ── Customer Intent ── */}
+          {activeSection === 'intent' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Customer Intent</h1>
+                <p className="ds-page-subtitle">Trends and analytics from widget interactions and visitor behavior.</p>
+              </div>
+              <div className="ds-metric-grid">
+                {[
+                  { label: 'Total Events', value: formatNumber(widgetAnalytics.length), desc: 'Tracked widget interactions', icon: Activity },
+                  { label: 'Sessions', value: formatNumber(analytics.chatSessions), desc: 'Distinct conversation sessions', icon: MessagesSquare },
+                  { label: 'Messages', value: formatNumber(analytics.widgetMessages), desc: 'Total messages exchanged', icon: MessageSquare },
+                  { label: 'Unique Visitors', value: formatNumber(analytics.leads), desc: 'Distinct visitor IPs', icon: BookOpenText },
+                ].map((card) => (
+                  <div key={card.label} className="ds-metric-card">
+                    <div className="ds-metric-card-head">
+                      <span className="ds-metric-label">{card.label}</span>
+                      <div className="ds-metric-icon"><card.icon className="h-4 w-4" /></div>
+                    </div>
+                    <div className="ds-metric-value">{card.value}</div>
+                    <div className="ds-metric-desc">{card.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="ds-chart-card">
+                <div className="ds-chart-header">
+                  <Activity className="h-4 w-4 text-[var(--accent-strong)]" />
+                  <h2 className="ds-chart-title">Activity Trend (Last 7 Days)</h2>
+                </div>
+                <ActivityChart data={chartData} />
+              </div>
             </div>
-          </div>
+          ) : null}
+
         </main>
       </div>
     </div>
