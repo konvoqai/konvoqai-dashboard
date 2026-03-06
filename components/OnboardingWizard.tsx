@@ -19,6 +19,7 @@ import {
   LogOut,
   Sparkles,
   Upload,
+  Zap,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
@@ -272,6 +273,8 @@ export function OnboardingWizard() {
   const [autoBrand, setAutoBrand] = useState<AutoBrand | null>(null);
   const [activePlatform, setActivePlatform] = useState<PlatformItem | null>(null);
   const [logoFallback, setLogoFallback] = useState<Record<string, boolean>>({});
+  const [showPricing, setShowPricing] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const autoAppliedRef = useRef(false);
 
@@ -705,7 +708,7 @@ export function OnboardingWizard() {
                     </form>
 
                     {/* Status pill — only when not idle */}
-                    {normalizedJobStatus !== 'idle' && (
+                    {/* {normalizedJobStatus !== 'idle' && (
                       <div className={`ob-train-status-pill ob-train-status-${normalizedJobStatus}`}>
                         {(isScrapingState || isIndexingState) ? (
                           <span className="ob-train-status-dot" />
@@ -719,7 +722,7 @@ export function OnboardingWizard() {
                           <span className="ob-train-status-pct">{pipelineProgress}%</span>
                         )}
                       </div>
-                    )}
+                    )} */}
                   </div>
 
                   {/* ── Divider ── */}
@@ -930,7 +933,7 @@ export function OnboardingWizard() {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               ) : (
-                <Button onClick={handleDone}>
+                <Button onClick={() => setShowPricing(true)}>
                   Go to Dashboard
                   <ArrowRight className="h-4 w-4" />
                 </Button>
@@ -1155,6 +1158,175 @@ export function OnboardingWizard() {
           </div>
         ) : null}
       </div>
+
+      {/* ── Pricing Overlay ── */}
+      {showPricing && (() => {
+        const yearly = billingCycle === 'yearly';
+        const plans = [
+          {
+            id: 'free',
+            name: 'Free',
+            tagline: 'Perfect for beginners exploring AI Agents',
+            price: '$0',
+            period: '/month',
+            cta: 'Get Started',
+            ctaStyle: '',
+            popular: false,
+            features: [
+              'Limited access to models',
+              '50 message credits / month',
+              '400 KB per AI agent',
+              'Embed on unlimited websites',
+            ],
+          },
+          {
+            id: 'basic',
+            name: 'Basic',
+            tagline: 'Advanced tools for serious users',
+            price: yearly ? '$10' : '$12',
+            period: '/month',
+            cta: 'Get Started',
+            ctaStyle: '',
+            popular: false,
+            features: [
+              'Limited access to models',
+              '4,000 message credits / month',
+              'Portfolio analytics dashboard',
+              '8 enabled AI Actions per AI agent',
+              'API access for automation',
+              'Advance integrations',
+            ],
+          },
+          {
+            id: 'pro',
+            name: 'Pro',
+            tagline: 'Full power for growing products',
+            price: yearly ? '$23' : '$29',
+            period: '/month',
+            cta: 'Get Started',
+            ctaStyle: 'is-primary',
+            popular: true,
+            features: [
+              '15,000 message credits / month',
+              '12 enabled AI Actions per AI agent',
+              '5 Members',
+              'White-label solutions',
+              'Custom AI limits',
+              'Multi-user team accounts',
+              'Advance analytics',
+            ],
+          },
+          {
+            id: 'enterprise',
+            name: 'Enterprise',
+            tagline: 'Built for institutions and high-volume users',
+            price: "Let's Talk",
+            period: '',
+            cta: 'Contact Sales',
+            ctaStyle: 'is-enterprise',
+            popular: false,
+            features: [
+              'Everything in Pro +',
+              'Unlimited message credits',
+              'Dedicated support & SLA',
+              'Custom integrations',
+              'On-premise deployment option',
+              'Security & compliance',
+            ],
+          },
+        ];
+
+        return (
+          <div className="pricing-overlay" role="dialog" aria-modal="true" aria-label="Choose your plan">
+            <div className="pricing-wrap">
+
+              {/* Header */}
+              <div className="pricing-header">
+                <div className="pricing-header-left">
+                  <h1 className="pricing-header-title">The best work solution,<br />for the best price</h1>
+                  <p className="pricing-header-desc">Transparent pricing for every investor. Scale as you grow with no hidden fees or surprise charges.</p>
+                </div>
+
+                {/* Toggle */}
+                <div className="pricing-toggle">
+                  <div className="pricing-toggle-inner">
+                    <button
+                      type="button"
+                      className={`pricing-toggle-btn ${billingCycle === 'monthly' ? 'is-active' : ''}`}
+                      onClick={() => setBillingCycle('monthly')}
+                    >Monthly</button>
+                    <button
+                      type="button"
+                      className={`pricing-toggle-btn ${billingCycle === 'yearly' ? 'is-active' : ''}`}
+                      onClick={() => setBillingCycle('yearly')}
+                    >Yearly</button>
+                  </div>
+                  {yearly && <span className="pricing-save-badge">20% OFF</span>}
+                </div>
+              </div>
+
+              {/* Cards */}
+              <div className="pricing-cards">
+                {plans.map((plan) => (
+                  <div key={plan.id} className={`pricing-card ${plan.popular ? 'is-popular' : ''}`}>
+                    {plan.popular && (
+                      <span className="pricing-popular-badge">
+                        <Zap className="h-2.5 w-2.5" /> Popular
+                      </span>
+                    )}
+
+                    <div className="pricing-card-header">
+                      <span className="pricing-card-name">{plan.name}</span>
+                      <span className="pricing-card-tagline">{plan.tagline}</span>
+                    </div>
+
+                    <div className="pricing-card-price">
+                      {plan.id === 'enterprise' ? (
+                        <span className="pricing-enterprise-price">{plan.price}</span>
+                      ) : (
+                        <>
+                          <span className="pricing-card-amount">{plan.price}</span>
+                          <span className="pricing-card-period">{plan.period}</span>
+                        </>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      className={`pricing-card-cta ${plan.ctaStyle}`}
+                      onClick={() => void handleDone()}
+                    >
+                      {plan.cta} {plan.ctaStyle !== 'is-enterprise' && <ArrowRight className="inline h-3 w-3 ml-1" />}
+                    </button>
+
+                    <div className="pricing-divider" />
+
+                    <div className="pricing-features">
+                      {plan.features.map((f) => (
+                        <div key={f} className="pricing-feature-row">
+                          <Check className="pricing-feature-check h-3 w-3" />
+                          <span>{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Continue free */}
+              <button
+                type="button"
+                className="pricing-continue-free"
+                onClick={() => void handleDone()}
+              >
+                Continue Free
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
