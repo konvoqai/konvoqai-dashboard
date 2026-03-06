@@ -86,97 +86,115 @@ const steps = [
 
 const installTips: Record<string, string[]> = {
   HTML: [
-    'Open your index.html or global template file.',
-    'Scroll to the very bottom of the file.',
-    'Paste the Konvoq script tag right before the closing </body> tag.',
-    'Save and refresh your browser to see the widget.',
+    'Open your project source folder and locate the main HTML files (e.g., index.html).',
+    'Scroll to the very bottom of the file structure to find the </body> closing tag.',
+    'Copy the Konvoq embed snippet provided in the panel above.',
+    'Paste the snippet on a new line immediately before the </body> tag.',
+    'Save your changes and refresh your browser to verify the widget is active.',
   ],
   WordPress: [
-    'Log in to your WordPress Admin Dashboard.',
-    'Go to Appearance > Theme File Editor.',
-    'Locate the footer.php file in the right sidebar.',
-    'Paste the Konvoq script tag just before the </body> tag.',
-    'Click "Update File" and visit your site.',
+    'Login to your WordPress Admin dashboard (typically located at /wp-admin).',
+    'In the sidebar, navigate to "Appearance" and select "Theme File Editor".',
+    'Find and click on the "Theme Footer" (footer.php) file in the right-hand sidebar.',
+    'Scroll down to the bottom of the code editor to locate the </body> tag.',
+    'Paste the Konvoq script tag directly above it and click "Update File" to save.',
+    'If you use a caching plugin, clear the site cache to see the changes immediately.',
   ],
   Shopify: [
-    'Go to Online Store > Themes in your Shopify admin.',
-    'Click the "..." button and select "Edit code".',
-    'Open the theme.liquid file under the Layout folder.',
-    'Paste the Konvoq script before the closing </body> tag.',
-    'Click "Save" to push the changes live.',
+    'Log in to your Shopify store admin and go to "Online Store" > "Themes".',
+    'Click the "..." (three dots) button next to your active theme and choose "Edit code".',
+    'In the file browser, locate and open "theme.liquid" under the "Layout" directory.',
+    'Scroll to the bottom of the file to find the closing </body> tag.',
+    'Paste the Konvoq script tag right before it and click "Save".',
+    'Launch your storefront to see your new AI agent in action.',
   ],
   Webflow: [
-    'Open your Project Settings in Webflow.',
-    'Navigate to the "Custom Code" tab.',
-    'Paste the Konvoq code in the "Footer Code" section.',
-    'Save changes and publish your site to the selected domains.',
+    'Open your Project Settings from the Webflow Dashboard.',
+    'Navigate to the "Custom Code" tab in the top navigation bar.',
+    'Locate the "Footer Code" section specifically for global placement.',
+    'Paste the Konvoq code directly into the text area.',
+    'Click "Save Changes" and then "Publish" your site to push the changes live.',
   ],
   Squarespace: [
-    'Go to Settings > Advanced > Code Injection.',
-    'Paste the Konvoq script into the "Footer" text area.',
-    'Click "Save" at the top left of the panel.',
+    'Login to your Squarespace dashboard and navigate to "Settings" > "Advanced".',
+    'Select "Code Injection" from the advanced sub-menu.',
+    'Scroll down to the "Footer" section to ensure site-wide placement.',
+    'Paste the unique Konvoq snippet into the text area.',
+    'Click "Save" at the top-left of the panel to apply the integration.',
   ],
   Wix: [
-    'Go to Settings in your site\'s dashboard.',
-    'Select "Custom Code" under the Advanced section.',
-    'Click "+ Add Custom Code" at the top right.',
-    'Paste the Konvoq script and set "Place Code in" to "Body - end".',
-    'Click "Apply" to save.',
+    'Open your site dashboard and click on "Settings" in the main menu.',
+    'Scroll down to the "Advanced" section and select "Custom Code".',
+    'Click "+ Add Custom Code" at the top right corner of the screen.',
+    'Paste the Konvoq snippet and name it "Konvoq Widget" for easy reference.',
+    'Set "Place Code in" to "Body - end" and click "Apply" to publish the changes.',
   ],
   'Next.js': [
-    'Import the "next/script" component in your Root Layout (layout.tsx).',
-    'Add the Konvoq script using <Script src="..." strategy="lazyOnload" />.',
-    'Ensure the ID matches the one provided in the snippet.',
+    'Open your root layout file (usually app/layout.tsx or pages/_document.js).',
+    'Import the "Script" component: import Script from "next/script";',
+    'Add the script tag before the closing </body> with strategy="lazyOnload".',
+    'Ensure you use the exact source URL provided in our embed panel.',
+    'Rebuild or restart your development server to see the widget.',
   ],
   React: [
-    'Open your index.html in the public/ folder.',
-    'Paste the script tag before the </body> tag.',
-    'Alternatively, use a hook to inject the script dynamically in App.tsx.',
+    'Navigate to your "public/" folder and open the "index.html" file.',
+    'Scroll to the end of the file and find the closing </body> tag.',
+    'Paste the Konvoq script tag immediately above it.',
+    'Alternatively, for a dynamic approach, inject it via a useEffect hook in App.tsx.',
+    'Save and reload your development environment.',
   ],
   Framer: [
-    'Open your Site Settings in Framer.',
-    'Navigate to the "General" or "Custom Code" tab.',
-    'Paste the script into the "End of <body> tag" section.',
-    'Publish your site to apply changes.',
+    'From your Framer project, click the "Settings" icon in the top right.',
+    'Select "General" settings and scroll down to the "Custom Code" section.',
+    'Insert the Konvoq snippet into the "End of <body> tag" input field.',
+    'Click "Save" and then "Publish" your site to the web.',
+    'The widget will now appear on all pages of your Framer site.',
   ],
   GoDaddy: [
-    'Open your Website Builder editor.',
-    'Click on "Settings" and then "Google Analytics/Facebook Pixel".',
-    'Paste the Konvoq script into the "Header Code" or use a HTML sections.',
-    'We recommend adding a "HTML" section at the bottom of the page.',
+    'Open your Website Builder editor and click on "Settings".',
+    'Select "Google Analytics/Facebook Pixel" or search for "Custom Code".',
+    'We recommend adding a "HTML" section to your global footer.',
+    'Paste the Konvoq script into the custom code box and save.',
+    'Publish your site to make the AI agent live for your visitors.',
   ],
   Ghost: [
-    'Go to Settings > Code Injection.',
-    'Paste the Konvoq script into the "Site Footer" box.',
-    'Click "Save" at the top of the page.',
+    'Access your Ghost Admin panel and click the Cog icon (Settings).',
+    'Navigate to "Code Injection" in the site settings side menu.',
+    'Find the "Site Footer" box to ensure the widget loads globally.',
+    'Paste your Konvoq script and click "Save" at the top of the interface.',
   ],
   WooCommerce: [
-    'Similar to WordPress, go to Appearance > Theme File Editor.',
-    'Edit the footer.php file of your active theme.',
-    'Paste the script before the </body> tag.',
+    'Detailed steps are identical to WordPress: Go to Appearance > Theme File Editor.',
+    'Edit the footer.php file for your current active WooCommerce theme.',
+    'Insert the script tag right before the closing </body> element.',
+    'Click "Update File" and refresh your store to see the integration.',
   ],
   'Google Sites': [
-    'Open your site in Google Sites editor.',
-    'On the right panel, click "Embed".',
-    'Select "Embed Code" and paste the Konvoq script.',
-    'Drag the embedded block to the bottom of your page.',
+    'Open your site editor in Google Sites and click "Embed" in the right panel.',
+    'Switch to the "Embed Code" tab in the pop-up window.',
+    'Paste the Konvoq snippet and click "Next", then "Insert".',
+    'Drag the new embed block to the very bottom of the page or into the footer.',
+    'Publish your site for the changes to take effect.',
   ],
   Weebly: [
-    'Go to Settings > SEO in your Weebly editor.',
-    'Paste the Konvoq script into the "Footer Code" section.',
-    'Click "Save" and then "Publish" your site.',
+    'Open the Weebly editor and go to "Settings" > "SEO" from the top menu.',
+    'Scroll down to find the "Footer Code" text field.',
+    'Paste your Konvoq integration script into this box.',
+    'Click "Save" and then "Publish" your site to enable the agent.',
   ],
   Blogger: [
-    'In your Blogger dashboard, go to Theme.',
+    'Go to the "Theme" tab in your Blogger dashboard sidebar.',
     'Click the arrow next to "Customize" and select "Edit HTML".',
-    'Search for </body> and paste the script right above it.',
-    'Click the Save icon (diskette) at the top right.',
+    'Use Ctrl+F to find the </body> tag inside the template code.',
+    'Paste the Konvoq script directly above that tag.',
+    'Click the Save (diskette) icon at the top right to confirm.',
   ],
   Tumblr: [
-    'Go to "Edit Appearance" and click "Edit Theme".',
-    'Click "Edit HTML" at the top of the left sidebar.',
-    'Search for </body> and paste the script before it.',
-    'Click "Update Preview" and then "Save".',
+    'On your Tumblr dashboard, click "Edit Appearance" and then "Edit Theme".',
+    'Select "Edit HTML" at the top of the left sidebar.',
+    'Scroll or search for the </body> tag in the code editor.',
+    'Paste the Konvoq snippet immediately above it.',
+    'Click "Update Preview" followed by "Save" to push changes.',
   ],
 };
 const platformList: PlatformItem[] = [
@@ -194,7 +212,7 @@ const platformList: PlatformItem[] = [
   { name: 'WooCommerce', color: '#9b59b6', logo: 'https://cdn.simpleicons.org/woocommerce/9b59b6', abbr: 'WC' },
   { name: 'Google Sites', color: '#4285f4', logo: 'https://www.google.com/s2/favicons?domain=sites.google.com&sz=64', abbr: 'GS' },
   { name: 'Weebly', color: '#f36c20', logo: 'https://www.google.com/s2/favicons?domain=weebly.com&sz=64', abbr: 'WB' },
-  // { name: 'Blogger', color: '#f57d00', logo: 'https://cdn.simpleicons.org/blogger/f57d00', abbr: 'BL' },
+  { name: 'Blogger', color: '#f57d00', logo: 'https://cdn.simpleicons.org/blogger/f57d00', abbr: 'BL' },
   { name: 'Tumblr', color: '#35a0dc', logo: 'https://cdn.simpleicons.org/tumblr/35a0dc', abbr: 'TB' },
 ];
 
@@ -948,8 +966,7 @@ export function OnboardingWizard() {
           ) : step === 3 ? (
             <aside className="onboarding-setup-right ob-platforms-aside section-surface">
               <div className="ob-platforms-head">
-                <h3>Install on any platform</h3>
-                <p>Works with any website - click a platform for guided setup.</p>
+                <h3>click a platform for guided setup.</h3>
               </div>
               <div className="ob-platforms-grid">
                 {platformList.map((p) => (
@@ -976,7 +993,6 @@ export function OnboardingWizard() {
                   </button>
                 ))}
               </div>
-              <p className="ob-platforms-hint">No plugin or API key needed - one script tag, instant results.</p>
             </aside>
           ) : (
             <aside className={`onboarding-setup-right ob-kgraph ob-stage-${pipelineStage} ${pipelineStage === 'failed' ? 'is-failed' : ''}`}>
