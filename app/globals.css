@@ -1191,7 +1191,7 @@ body::after {
 
 .onboarding-setup-left-header {
   width: 100%;
-  max-width: 580px;
+  max-width: 640px;
   margin: 25px auto;
   padding-bottom: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -1215,10 +1215,32 @@ body::after {
 .onboarding-setup-left-body {
   min-height: 0;
   overflow: auto;
-  padding: 4px 8px 4px 4px;
+  overflow-x: hidden;
+  padding: 4px 12px 4px 4px;
   width: 100%;
-  max-width: 580px;
-  margin: 0 auto;
+  max-width: 640px;
+  margin: -25px auto;
+
+  /* Custom dark minimal scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+.onboarding-setup-left-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.onboarding-setup-left-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.onboarding-setup-left-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+}
+
+.onboarding-setup-left-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .onboarding-setup-left-body.is-launch-step {
@@ -1273,7 +1295,25 @@ body::after {
 .ob-style-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+}
+
+.ob-style-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ob-field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+@media (max-width: 560px) {
+  .ob-style-grid-2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ob-auto-notice {
@@ -1293,9 +1333,9 @@ body::after {
 .ob-style-group {
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 11px;
-  padding: 13px 14px;
+  padding: 11px 13px;
   display: grid;
-  gap: 10px;
+  gap: 8px;
   background: rgba(255, 255, 255, 0.018);
   transition: border-color 200ms ease;
 }
@@ -1982,9 +2022,22 @@ body::after {
 }
 
 @keyframes ob-kgraph-orb-float {
-  0%, 100% { opacity: 0.55; transform: scale(1) translate(0, 0); }
-  33% { opacity: 0.85; transform: scale(1.08) translate(-10px, 8px); }
-  66% { opacity: 0.65; transform: scale(0.96) translate(6px, -6px); }
+
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1) translate(0, 0);
+  }
+
+  33% {
+    opacity: 0.85;
+    transform: scale(1.08) translate(-10px, 8px);
+  }
+
+  66% {
+    opacity: 0.65;
+    transform: scale(0.96) translate(6px, -6px);
+  }
 }
 
 /* Subtle dot grid */
@@ -1998,7 +2051,7 @@ body::after {
 }
 
 /* Put all content above background */
-.ob-kgraph > *:not(.ob-kgraph-bg) {
+.ob-kgraph>*:not(.ob-kgraph-bg) {
   position: relative;
   z-index: 1;
 }
@@ -2060,9 +2113,17 @@ body::after {
 }
 
 @keyframes ob-kgraph-ping {
-  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.6); }
-  70% { box-shadow: 0 0 0 9px rgba(99, 102, 241, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.6);
+  }
+
+  70% {
+    box-shadow: 0 0 0 9px rgba(99, 102, 241, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
 }
 
 /* ── Vertical timeline ── */
@@ -2145,7 +2206,9 @@ body::after {
 }
 
 @keyframes ob-kgraph-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Pending number */
@@ -2191,10 +2254,23 @@ body::after {
 }
 
 @keyframes ob-kgraph-packet-drop {
-  0% { top: -40%; opacity: 0; }
-  8% { opacity: 1; }
-  92% { opacity: 1; }
-  100% { top: 140%; opacity: 0; }
+  0% {
+    top: -40%;
+    opacity: 0;
+  }
+
+  8% {
+    opacity: 1;
+  }
+
+  92% {
+    opacity: 1;
+  }
+
+  100% {
+    top: 140%;
+    opacity: 0;
+  }
 }
 
 /* ── Node content (right side) ── */
@@ -2214,9 +2290,17 @@ body::after {
   transition: color 350ms ease;
 }
 
-.ob-kgraph-node-label--done { color: rgba(255, 255, 255, 0.82); }
-.ob-kgraph-node-label--active { color: rgba(255, 255, 255, 0.96); }
-.ob-kgraph-node-label--failed { color: rgba(252, 165, 165, 0.72); }
+.ob-kgraph-node-label--done {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.ob-kgraph-node-label--active {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.ob-kgraph-node-label--failed {
+  color: rgba(252, 165, 165, 0.72);
+}
 
 .ob-kgraph-node-sub {
   display: block;
@@ -2254,8 +2338,15 @@ body::after {
 }
 
 @keyframes ob-kgraph-badge-blink {
-  0%, 100% { opacity: 0.65; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 .ob-kgraph-badge--pending {
@@ -2307,8 +2398,13 @@ body::after {
 }
 
 @keyframes ob-kgraph-shimmer-slide {
-  0% { transform: translateX(-120%); }
-  100% { transform: translateX(220%); }
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(220%);
+  }
 }
 
 .ob-kgraph-progress-row {
@@ -2341,8 +2437,15 @@ body::after {
 }
 
 @keyframes ob-kgraph-pop-in {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .ob-kgraph-waiting {
@@ -2489,7 +2592,9 @@ body::after {
 }
 
 @keyframes ob-pipe-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Pending ring */
@@ -2518,9 +2623,17 @@ body::after {
   transition: color 300ms ease;
 }
 
-.ob-pipe-title--done    { color: rgba(255, 255, 255, 0.85); }
-.ob-pipe-title--active  { color: rgba(255, 255, 255, 0.96); }
-.ob-pipe-title--failed  { color: rgba(252, 165, 165, 0.75); }
+.ob-pipe-title--done {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.ob-pipe-title--active {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.ob-pipe-title--failed {
+  color: rgba(252, 165, 165, 0.75);
+}
 
 .ob-pipe-card-desc {
   font-size: 11px;
@@ -2554,8 +2667,15 @@ body::after {
 }
 
 @keyframes ob-pipe-chip-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 .ob-pipe-chip--pending {
@@ -2588,9 +2708,17 @@ body::after {
   transition: background 350ms ease;
 }
 
-.ob-pipe-conn-dot--done    { background: rgba(34, 197, 94, 0.55); }
-.ob-pipe-conn-dot--active  { background: rgba(99, 102, 241, 0.7); }
-.ob-pipe-conn-dot--failed  { background: rgba(239, 68, 68, 0.5); }
+.ob-pipe-conn-dot--done {
+  background: rgba(34, 197, 94, 0.55);
+}
+
+.ob-pipe-conn-dot--active {
+  background: rgba(99, 102, 241, 0.7);
+}
+
+.ob-pipe-conn-dot--failed {
+  background: rgba(239, 68, 68, 0.5);
+}
 
 /* The line itself */
 .ob-pipe-conn-line {
@@ -2624,10 +2752,23 @@ body::after {
 }
 
 @keyframes ob-pipe-packet {
-  0%   { top: -50%; opacity: 0; }
-  8%   { opacity: 1; }
-  92%  { opacity: 1; }
-  100% { top: 150%; opacity: 0; }
+  0% {
+    top: -50%;
+    opacity: 0;
+  }
+
+  8% {
+    opacity: 1;
+  }
+
+  92% {
+    opacity: 1;
+  }
+
+  100% {
+    top: 150%;
+    opacity: 0;
+  }
 }
 
 /* ── Final state banners ── */
@@ -2647,8 +2788,15 @@ body::after {
 }
 
 @keyframes ob-pipe-pop {
-  from { opacity: 0; transform: scale(0.82) translateY(4px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.82) translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .ob-pipe-failed-banner {

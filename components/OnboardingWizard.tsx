@@ -752,22 +752,24 @@ export function OnboardingWizard() {
 
                   {/* Brand group */}
                   <div className="ob-style-group">
-                    <span className="ob-style-group-label">Brand</span>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-(--text-3)">Widget name</Label>
-                      <Input
-                        value={widgetName}
-                        onChange={(e) => { setWidgetSaved(false); setWidgetName(e.target.value); }}
-                        placeholder="My Chat Widget"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-(--text-3)">Bot name</Label>
-                      <Input
-                        value={widgetConfig.botName}
-                        onChange={(e) => updateWidgetConfig((p) => ({ ...p, botName: e.target.value }))}
-                        placeholder="Konvoq AI"
-                      />
+                    <span className="ob-style-group-label">Widget Branding</span>
+                    <div className="ob-style-grid-2">
+                      <div className="ob-field-stack">
+                        <Label className="text-xs text-(--text-3)">Widget name</Label>
+                        <Input
+                          value={widgetName}
+                          onChange={(e) => { setWidgetSaved(false); setWidgetName(e.target.value); }}
+                          placeholder="My Chat Widget"
+                        />
+                      </div>
+                      <div className="ob-field-stack">
+                        <Label className="text-xs text-(--text-3)">Bot name</Label>
+                        <Input
+                          value={widgetConfig.botName}
+                          onChange={(e) => updateWidgetConfig((p) => ({ ...p, botName: e.target.value }))}
+                          placeholder="Konvoq AI"
+                        />
+                      </div>
                     </div>
                   </div>
 
