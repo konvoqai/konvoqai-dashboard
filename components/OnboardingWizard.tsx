@@ -965,60 +965,113 @@ export function OnboardingWizard() {
               <p className="ob-platforms-hint">No plugin or API key needed - one script tag, instant results.</p>
             </aside>
           ) : (
-            <aside className={`onboarding-setup-right section-surface ob-stage-${pipelineStage} ${pipelineStage === 'failed' ? 'is-failed' : ''}`}>
-              <div className="onboarding-setup-right-head">
-                <h3>Pipeline status</h3>
-                <p>{stageLabel[pipelineStage]}</p>
+            <aside className={`onboarding-setup-right ob-kgraph ob-stage-${pipelineStage} ${pipelineStage === 'failed' ? 'is-failed' : ''}`}>
+
+              {/* Decorative bg */}
+              <div className="ob-kgraph-bg" aria-hidden>
+                <div className="ob-kgraph-orb" />
+                <div className="ob-kgraph-grid" />
               </div>
 
-              <div className="ob-simple-list">
-                {checklistItems.map((item) => (
-                  <div key={item.id} className={`ob-simple-item ${item.state}`}>
-                    <div className="ob-simple-icon">
-                      {item.state === 'done' ? (
-                        <Check className="h-4 w-4" />
-                      ) : item.state === 'failed' ? (
-                        <AlertTriangle className="h-4 w-4" />
-                      ) : (
-                        <Circle className="h-4 w-4" />
+              {/* Header */}
+              <div className="ob-kgraph-header">
+                <div className="ob-kgraph-header-row">
+                  <span className="ob-kgraph-eyebrow">Knowledge Pipeline</span>
+                  <span className={`ob-kgraph-live-dot ob-kgraph-live--${pipelineStage}`} />
+                </div>
+                <p className="ob-kgraph-subtitle">{stageLabel[pipelineStage]}</p>
+              </div>
+
+              {/* ── Centered card pipeline ── */}
+              <div className="ob-pipe-flow">
+                {([
+                  { key: 'detect',  title: 'Website detected',   desc: 'Source URL validated',            done: pipelineStage !== 'idle',                               active: false },
+                  { key: 'crawl',   title: 'Pages discovered',   desc: 'Crawling all linked pages',        done: ['indexing','done'].includes(pipelineStage),            active: isScrapingState },
+                  { key: 'process', title: 'Content processed',  desc: 'Formatting for AI retrieval',      done: pipelineStage === 'done',                               active: isIndexingState },
+                  { key: 'ready',   title: 'Knowledge ready',    desc: 'Widget can now answer questions',  done: pipelineStage === 'done',                               active: false },
+                ] as const).map((node, idx, arr) => {
+                  const state: 'done' | 'active' | 'failed' | 'pending' =
+                    isFailedState && !node.done ? 'failed'
+                    : node.done ? 'done'
+                    : node.active ? 'active'
+                    : 'pending';
+                  const isLast = idx === arr.length - 1;
+                  const connectorLit = state === 'done' || state === 'active';
+                  return (
+                    <div key={node.key} className="ob-pipe-node-wrap">
+                      {/* Card */}
+                      <div className={`ob-pipe-card ob-pipe-card--${state}`}>
+                        {/* Left: status icon */}
+                        <div className={`ob-pipe-icon ob-pipe-icon--${state}`}>
+                          {state === 'done'    && <Check className="h-3.5 w-3.5" />}
+                          {state === 'active'  && <span className="ob-pipe-spinner" />}
+                          {state === 'failed'  && <AlertTriangle className="h-3 w-3" />}
+                          {state === 'pending' && <span className="ob-pipe-pending-ring" />}
+                        </div>
+                        {/* Center: text */}
+                        <div className="ob-pipe-card-body">
+                          <span className={`ob-pipe-card-title ob-pipe-title--${state}`}>{node.title}</span>
+                          <span className="ob-pipe-card-desc">{node.desc}</span>
+                        </div>
+                        {/* Right: status chip */}
+                        <span className={`ob-pipe-chip ob-pipe-chip--${state}`}>
+                          {state === 'done'    ? '✓' :
+                           state === 'active'  ? (pipelineProgress > 0 ? `${pipelineProgress}%` : '…') :
+                           state === 'failed'  ? '!' :
+                           '–'}
+                        </span>
+                      </div>
+
+                      {/* Connector to next card */}
+                      {!isLast && (
+                        <div className={`ob-pipe-connector ob-pipe-connector--${connectorLit ? 'lit' : 'dim'}`}>
+                          <span className={`ob-pipe-conn-dot ob-pipe-conn-dot--top ob-pipe-conn-dot--${state}`} />
+                          <div className="ob-pipe-conn-line">
+                            {state === 'active' && <span className="ob-pipe-conn-packet" />}
+                            {state === 'done'   && <span className="ob-pipe-conn-packet ob-pipe-conn-packet--done" />}
+                          </div>
+                          <span className={`ob-pipe-conn-dot ob-pipe-conn-dot--bottom ob-pipe-conn-dot--${state}`} />
+                        </div>
                       )}
                     </div>
-                    <div className="ob-simple-copy">
-                      <p>{item.label}</p>
-                      <span>{item.description}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  );
+                })}
 
-              <div className="ob-simple-progress">
-                <div className="ob-simple-progress-track">
-                  <div className="ob-simple-progress-fill" style={{ width: `${pipelineProgress}%` }} />
-                </div>
-                <span>{pipelineProgress}% complete</span>
-              </div>
-
-              <div className="ob-right-ctx">
-                {pipelineStage === 'done' ? (
-                  <div className="onboarding-setup-right-status done">
-                    <Check className="h-4 w-4" />
-                    <span>All training data has been prepared.</span>
+                {/* Final state banner */}
+                {pipelineStage === 'done' && (
+                  <div className="ob-pipe-complete">
+                    <Check className="h-3.5 w-3.5" />
+                    <span>Pipeline completed</span>
                   </div>
-                ) : pipelineStage === 'failed' ? (
-                  <div className="onboarding-setup-right-status failed">
-                    <span>Latest training attempt failed. Add another source to retry.</span>
-                  </div>
-                ) : (
-                  <p className="ob-ctx-hint">
-                    {isScrapingState
-                      ? 'Collecting and processing your website pages.'
-                      : isIndexingState
-                        ? 'Building the knowledge index.'
-                        : step === 1 && !hasPipelineData
-                          ? 'Add a website URL above to begin training your assistant.'
-                          : 'Processing can take up to 2 minutes. Please wait.'}
-                  </p>
                 )}
+                {pipelineStage === 'idle' && !hasPipelineData && (
+                  <p className="ob-pipe-idle-hint">Add a website URL to begin training</p>
+                )}
+                {isFailedState && (
+                  <div className="ob-pipe-failed-banner">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    <span>Training failed — add another URL to retry</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Progress bar */}
+              <div className="ob-kgraph-progress-wrap">
+                <div className="ob-kgraph-progress-track">
+                  <div className="ob-kgraph-progress-fill" style={{ width: `${pipelineProgress}%` }}>
+                    {(isScrapingState || isIndexingState) && <span className="ob-kgraph-shimmer" />}
+                  </div>
+                </div>
+                <div className="ob-kgraph-progress-row">
+                  <span className="ob-kgraph-pct">{pipelineProgress}% complete</span>
+                  {pipelineStage === 'done' && (
+                    <span className="ob-kgraph-done-badge"><Check className="h-3 w-3" />Ready</span>
+                  )}
+                  {pipelineStage === 'idle' && !hasPipelineData && (
+                    <span className="ob-kgraph-waiting">Awaiting URL</span>
+                  )}
+                  {isFailedState && <span className="ob-kgraph-failed-badge">Retry needed</span>}
+                </div>
               </div>
             </aside>
           )}
