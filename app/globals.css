@@ -1165,7 +1165,7 @@ body::after {
   min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  gap: 18px;
   padding: 30px 30px;
 }
 
@@ -3444,10 +3444,11 @@ body::after {
 
 .ob-embed-code-wrap {
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
   overflow: hidden;
-  background: #050608;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(12, 14, 20, 0.96) 0%, rgba(6, 7, 10, 0.98) 100%);
   display: flex;
   flex-direction: column;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -3516,19 +3517,24 @@ body::after {
 
 .ob-embed-code-pre {
   margin: 0;
-  padding: 16px 18px;
+  padding: 14px 18px 16px;
+  min-height: 58px;
   font-family: ui-monospace, 'Cascadia Code', 'JetBrains Mono', monospace;
-  font-size: 12px;
-  line-height: 1.6;
-  color: #8da2ff;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #c6d2ff;
+  text-shadow: 0 0 14px rgba(99, 102, 241, 0.24);
   overflow-x: auto;
+  overflow-y: visible;
   white-space: pre-wrap;
-  word-break: break-all;
-  background: transparent;
+  word-break: break-word;
+  background: rgba(8, 10, 16, 0.82);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  user-select: text;
 }
 
-.ob-embed-code-pre code {
-  filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.15));
+.ob-embed-code-pre.is-empty {
+  color: #9da8c9;
 }
 
 /* ── Instructions: fill remaining vertical space ── */
@@ -3546,7 +3552,7 @@ body::after {
 .ob-embed-instructions::before {
   content: '';
   position: absolute;
-  left: 20px;
+  left: 25px;
   top: 15px;
   bottom: 15px;
   width: 1px;

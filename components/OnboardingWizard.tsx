@@ -559,6 +559,10 @@ export function OnboardingWizard() {
     failed: 'Pipeline encountered an issue',
   };
   const shortStepTitle: Record<1 | 2 | 3, string> = { 1: 'Train', 2: 'Style', 3: 'Launch' };
+  const hasEmbedCode = embedCode.trim().length > 0;
+  const embedSnippetPreview = hasEmbedCode
+    ? embedCode.trim()
+    : '<script src="https://your-domain.com/api/v1/embed/your-widget-key.js"></script>';
 
   const platformInstructions =
     (activePlatform && installTips[activePlatform.name]) || [
@@ -875,14 +879,14 @@ export function OnboardingWizard() {
                           await navigator.clipboard.writeText(embedCode);
                           toast.success('Copied to clipboard!');
                         }}
-                        disabled={!embedCode}
+                        disabled={!hasEmbedCode}
                       >
                         <Copy className="h-3 w-3" />
                         Copy code
                       </button>
                     </div>
-                    <pre className="ob-embed-code-pre">
-                      <code>{embedCode || '<script src="…"></script>'}</code>
+                    <pre className={`ob-embed-code-pre${hasEmbedCode ? '' : ' is-empty'}`}>
+                      {embedSnippetPreview}
                     </pre>
                   </div>
 
@@ -899,15 +903,6 @@ export function OnboardingWizard() {
                           <span className="ob-embed-instruction-title">{item.title}</span>
                           <span className="ob-embed-instruction-detail">{item.detail}</span>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Ready status chips */}
-                  <div className="ob-embed-ready-row">
-                    {['Source connected', 'Widget saved', 'Code ready'].map((label) => (
-                      <div key={label} className="ob-embed-ready-chip">
-                        {label}
                       </div>
                     ))}
                   </div>
@@ -966,7 +961,7 @@ export function OnboardingWizard() {
           ) : step === 3 ? (
             <aside className="onboarding-setup-right ob-platforms-aside section-surface">
               <div className="ob-platforms-head">
-                <h3>click a platform for guided setup.</h3>
+                <h3>Click a platform for guided setup.</h3>
               </div>
               <div className="ob-platforms-grid">
                 {platformList.map((p) => (
@@ -1143,7 +1138,7 @@ export function OnboardingWizard() {
                 <div className="ob-install-script-block">
                   <span>Embed script</span>
                   <pre>
-                    <code>{embedCode || '<script src="..."></script>'}</code>
+                    <code>{embedSnippetPreview}</code>
                   </pre>
                 </div>
 
@@ -1163,4 +1158,5 @@ export function OnboardingWizard() {
     </div>
   );
 }
+
 
