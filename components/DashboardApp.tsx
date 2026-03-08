@@ -87,6 +87,10 @@ interface WidgetConfig {
   position: string;
   borderRadius: number;
   fontSize: number;
+  homeTitle: string;
+  agentLabel: string;
+  showHomeScreen: boolean;
+  quickLinks: Array<{ label: string; url: string }>;
 }
 
 interface WidgetRecord {
@@ -286,6 +290,10 @@ const defaultWidgetConfig: WidgetConfig = {
   position: 'bottom-right',
   borderRadius: 24,
   fontSize: 14,
+  homeTitle: 'Start a conversation',
+  agentLabel: 'AI assistant',
+  showHomeScreen: true,
+  quickLinks: [],
 };
 
 // ─── Section registry ─────────────────────────────────────────────────────────
@@ -295,21 +303,21 @@ const sections: Array<{
   label: string;
   icon: typeof LayoutDashboard;
 }> = [
-  { id: 'overview',    label: 'Overview',       icon: LayoutDashboard },
-  { id: 'widget',      label: 'Craft Console',  icon: Settings2 },
-  { id: 'persona',     label: 'Persona',        icon: Bot },
-  { id: 'navigation',  label: 'Navigation',     icon: Navigation2 },
-  { id: 'flows',       label: 'Flows',          icon: GitBranch },
-  { id: 'branding',    label: 'Branding',       icon: Palette },
-  { id: 'sources',     label: 'Data Sources',   icon: BookOpenText },
-  { id: 'chat',        label: 'Chat History',   icon: MessagesSquare },
-  { id: 'leads',       label: 'Leads',          icon: Users },
-  { id: 'crm',         label: 'CRM Pipeline',   icon: BarChart3 },
-  { id: 'inbox',       label: 'Inbox',          icon: Inbox },
-  { id: 'feedback',    label: 'Feedback',       icon: MessageSquare },
-  { id: 'settings',    label: 'Settings',       icon: User },
-  { id: 'plan',        label: 'Plan & Billing', icon: Crown },
-];
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'widget', label: 'Craft Console', icon: Settings2 },
+    { id: 'persona', label: 'Persona', icon: Bot },
+    { id: 'navigation', label: 'Navigation', icon: Navigation2 },
+    { id: 'flows', label: 'Flows', icon: GitBranch },
+    { id: 'branding', label: 'Branding', icon: Palette },
+    { id: 'sources', label: 'Data Sources', icon: BookOpenText },
+    { id: 'chat', label: 'Chat History', icon: MessagesSquare },
+    { id: 'leads', label: 'Leads', icon: Users },
+    { id: 'crm', label: 'CRM Pipeline', icon: BarChart3 },
+    { id: 'inbox', label: 'Inbox', icon: Inbox },
+    { id: 'feedback', label: 'Feedback', icon: MessageSquare },
+    { id: 'settings', label: 'Settings', icon: User },
+    { id: 'plan', label: 'Plan & Billing', icon: Crown },
+  ];
 
 type AppGroup = 'overview' | 'conversations' | 'knowledge' | 'aiconfig';
 
@@ -319,11 +327,11 @@ const appGroups: Array<{
   label: string;
   sections: DashboardSection[];
 }> = [
-  { id: 'overview',      icon: LayoutDashboard, label: 'Overview',      sections: ['overview'] },
-  { id: 'conversations', icon: MessagesSquare,  label: 'Conversations', sections: ['chat', 'feedback', 'leads', 'crm', 'inbox'] },
-  { id: 'knowledge',     icon: BookOpenText,    label: 'Knowledge',     sections: ['sources'] },
-  { id: 'aiconfig',      icon: Bot,             label: 'AI Config',     sections: ['widget', 'persona', 'navigation', 'flows', 'branding'] },
-];
+    { id: 'overview', icon: LayoutDashboard, label: 'Overview', sections: ['overview'] },
+    { id: 'conversations', icon: MessagesSquare, label: 'Conversations', sections: ['chat', 'feedback', 'leads', 'crm', 'inbox'] },
+    { id: 'knowledge', icon: BookOpenText, label: 'Knowledge', sections: ['sources'] },
+    { id: 'aiconfig', icon: Bot, label: 'AI Config', sections: ['widget', 'persona', 'navigation', 'flows', 'branding'] },
+  ];
 
 // ─── ActivityChart ────────────────────────────────────────────────────────────
 
@@ -1288,13 +1296,13 @@ export function DashboardApp() {
                 const Icon = section.icon;
                 const count =
                   sectionId === 'chat' ? chatSessions.length
-                  : sectionId === 'feedback' ? feedback.length
-                  : sectionId === 'leads' ? leads.length
-                  : sectionId === 'sources' ? sources.length
-                  : sectionId === 'crm' ? leads.length || null
-                  : sectionId === 'inbox' ? (handoffs.filter(h => h.status === 'pending').length || null)
-                  : sectionId === 'flows' ? (flows.length || null)
-                  : null;
+                    : sectionId === 'feedback' ? feedback.length
+                      : sectionId === 'leads' ? leads.length
+                        : sectionId === 'sources' ? sources.length
+                          : sectionId === 'crm' ? leads.length || null
+                            : sectionId === 'inbox' ? (handoffs.filter(h => h.status === 'pending').length || null)
+                              : sectionId === 'flows' ? (flows.length || null)
+                                : null;
                 return (
                   <button
                     key={sectionId}
@@ -1612,6 +1620,77 @@ export function DashboardApp() {
                       <Input type="number" value={widgetConfig.fontSize} onChange={(e) => updateWidgetConfig({ fontSize: Number(e.target.value) || defaultWidgetConfig.fontSize })} />
                     </div>
 
+                    {/* Home screen settings */}
+                    <div className="rounded-2xl border border-white/8 bg-[var(--surface)] p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-[var(--text-1)]">Home screen</span>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={widgetConfig.showHomeScreen}
+                            onChange={(e) => updateWidgetConfig({ showHomeScreen: e.target.checked })}
+                            className="h-4 w-4 accent-[var(--accent-strong)]"
+                          />
+                          <span className="text-xs text-[var(--text-3)]">Show on open</span>
+                        </label>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold text-[var(--text-2)]">Home title</Label>
+                        <Input value={widgetConfig.homeTitle} placeholder="Start a conversation" onChange={(e) => updateWidgetConfig({ homeTitle: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold text-[var(--text-2)]">Agent label</Label>
+                        <Input value={widgetConfig.agentLabel} placeholder="AI assistant" onChange={(e) => updateWidgetConfig({ agentLabel: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold text-[var(--text-2)]">Quick links</Label>
+                        <p className="text-xs text-[var(--text-3)]">Add up to 4 links shown on the home screen.</p>
+                        <div className="space-y-2">
+                          {widgetConfig.quickLinks.map((ql, i) => (
+                            <div key={i} className="flex gap-2 items-center">
+                              <Input
+                                value={ql.label}
+                                placeholder="Label"
+                                className="flex-1"
+                                onChange={(e) => {
+                                  const next = [...widgetConfig.quickLinks];
+                                  next[i] = { ...next[i], label: e.target.value };
+                                  updateWidgetConfig({ quickLinks: next });
+                                }}
+                              />
+                              <Input
+                                value={ql.url}
+                                placeholder="https://..."
+                                className="flex-1"
+                                onChange={(e) => {
+                                  const next = [...widgetConfig.quickLinks];
+                                  next[i] = { ...next[i], url: e.target.value };
+                                  updateWidgetConfig({ quickLinks: next });
+                                }}
+                              />
+                              <button
+                                type="button"
+                                className="shrink-0 text-[var(--text-3)] hover:text-red-400 transition-colors"
+                                onClick={() => updateWidgetConfig({ quickLinks: widgetConfig.quickLinks.filter((_, j) => j !== i) })}
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                          {widgetConfig.quickLinks.length < 4 && (
+                            <button
+                              type="button"
+                              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/15 py-2 text-sm text-[var(--text-3)] hover:border-white/30 hover:text-[var(--text-2)] transition-colors"
+                              onClick={() => updateWidgetConfig({ quickLinks: [...widgetConfig.quickLinks, { label: '', url: '' }] })}
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                              Add link
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Allowed domains */}
                     <div className="space-y-2">
                       <Label className="text-sm font-semibold text-[var(--text-2)]">Allowed domains</Label>
@@ -1634,40 +1713,81 @@ export function DashboardApp() {
                 <div className="space-y-5">
                   {/* Preview */}
                   <div className="section-surface p-6">
-                    <div className="mb-5">
-                      <h2 className="mb-2 text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">Live preview</h2>
+                    <div className="mb-4">
+                      <h2 className="text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">Live preview</h2>
                     </div>
+                    {/* Widget home screen preview */}
                     <div
-                      className="relative overflow-hidden rounded-[28px] border border-white/10 p-5 shadow-[var(--shadow-card)]"
-                      style={{ background: `radial-gradient(circle at top, ${widgetConfig.primaryColor}22, transparent 40%), ${widgetConfig.backgroundColor}` }}
+                      className="mx-auto w-full max-w-[340px] overflow-hidden rounded-[20px] border border-black/10 shadow-xl"
+                      style={{ fontFamily: 'Inter, sans-serif', background: '#ffffff' }}
                     >
-                      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/8 to-transparent" />
-                      <div className="relative space-y-4">
-                        <div className="flex items-center justify-between gap-3">
+                      {/* Topbar */}
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                        <div className="w-4 h-4" />
+                        <span className="text-xs font-medium text-gray-400">Home</span>
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-gray-400 text-xs cursor-pointer">×</div>
+                      </div>
+                      {/* Home body */}
+                      <div className="px-5 pt-5 pb-3 space-y-4">
+                        <h2 className="text-xl font-bold text-gray-900 leading-tight">{widgetConfig.homeTitle || 'Start a conversation'}</h2>
+                        {/* Agent card */}
+                        <div className="rounded-2xl border border-gray-100 p-4 shadow-sm space-y-3">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl" style={{ background: widgetConfig.primaryColor, color: widgetConfig.textColor }}>
+                            <div
+                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white"
+                              style={{ background: widgetConfig.primaryColor }}
+                            >
                               {widgetConfig.logoUrl ? (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={widgetConfig.logoUrl} alt="" className="h-6 w-6 rounded-full object-cover" />
+                                <img src={widgetConfig.logoUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
                               ) : (
-                                <Bot className="h-5 w-5" />
+                                <Bot className="h-4 w-4" />
                               )}
                             </div>
-                            <div>
-                              <div className="text-sm font-semibold" style={{ color: widgetConfig.textColor }}>{widgetConfig.botName}</div>
-                              <div className="text-xs text-white/50">Live support assistant</div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-semibold text-gray-900">{widgetConfig.botName}</span>
+                              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                              <span className="text-xs text-gray-400">online</span>
                             </div>
                           </div>
-                          <div className="dashboard-chip">Preview</div>
+                          {widgetConfig.welcomeMessage && (
+                            <p className="text-sm text-gray-600 leading-relaxed">{widgetConfig.welcomeMessage}</p>
+                          )}
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                            style={{ background: widgetConfig.primaryColor }}
+                          >
+                            Let&#39;s chat
+                            <span>→</span>
+                          </button>
                         </div>
-                        <div className="space-y-3">
-                          <div className="max-w-[86%] rounded-[24px] px-4 py-3" style={{ background: 'rgba(255,255,255,0.08)', color: widgetConfig.textColor, fontSize: widgetConfig.fontSize, borderRadius: widgetConfig.borderRadius }}>
-                            {widgetConfig.welcomeMessage}
+                        {/* Quick links preview */}
+                        {widgetConfig.quickLinks.length > 0 && (
+                          <div className="space-y-1.5">
+                            {widgetConfig.quickLinks.slice(0, 3).map((ql, i) => (
+                              <div key={i} className="flex items-center justify-between rounded-xl border border-gray-100 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                <span>{ql.label}</span>
+                                <span className="text-gray-400 text-xs">→</span>
+                              </div>
+                            ))}
                           </div>
-                          <div className="ml-auto max-w-[72%] rounded-[24px] px-4 py-3" style={{ background: widgetConfig.primaryColor, color: widgetConfig.textColor, fontSize: widgetConfig.fontSize, borderRadius: widgetConfig.borderRadius }}>
-                            Can you help me with pricing?
-                          </div>
+                        )}
+                      </div>
+                      {/* Tab bar */}
+                      <div className="flex border-t border-gray-100">
+                        <div className="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-medium" style={{ color: widgetConfig.primaryColor }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
+                          Home
                         </div>
+                        <div className="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-medium text-gray-400">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                          Chat
+                        </div>
+                      </div>
+                      {/* Footer */}
+                      <div className="border-t border-gray-100 py-2 text-center text-[10px] text-gray-400">
+                        powered by <span className="font-semibold text-gray-500">konvoq</span>
                       </div>
                     </div>
                   </div>
@@ -2619,10 +2739,10 @@ export function DashboardApp() {
                               const updated = { ...activeCrmLead, pipelineStage: e.target.value };
                               setActiveCrmLead(updated);
                               setLeads((prev) => prev.map((l) => l.id === activeCrmLead.id ? updated : l));
-                              void apiClient.put(`/dashboard/leads/${activeCrmLead.id}/pipeline`, { pipelineStage: e.target.value }).catch(() => {});
+                              void apiClient.put(`/dashboard/leads/${activeCrmLead.id}/pipeline`, { pipelineStage: e.target.value }).catch(() => { });
                             }}
                           >
-                            {['new','contacted','qualified','proposal','won','lost'].map((s) => (
+                            {['new', 'contacted', 'qualified', 'proposal', 'won', 'lost'].map((s) => (
                               <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                             ))}
                           </select>
@@ -2637,7 +2757,7 @@ export function DashboardApp() {
                             onChange={(e) => setActiveCrmLead((l) => l ? { ...l, crmNotes: e.target.value } : l)}
                             onBlur={() => {
                               if (!activeCrmLead) return;
-                              void apiClient.put(`/dashboard/leads/${activeCrmLead.id}/pipeline`, { crmNotes: activeCrmLead.crmNotes }).catch(() => {});
+                              void apiClient.put(`/dashboard/leads/${activeCrmLead.id}/pipeline`, { crmNotes: activeCrmLead.crmNotes }).catch(() => { });
                               setLeads((prev) => prev.map((l) => l.id === activeCrmLead.id ? activeCrmLead : l));
                             }}
                           />
@@ -2647,7 +2767,7 @@ export function DashboardApp() {
                   ) : null}
 
                   <div className="ds-kanban">
-                    {['new','contacted','qualified','proposal','won','lost'].map((stage) => {
+                    {['new', 'contacted', 'qualified', 'proposal', 'won', 'lost'].map((stage) => {
                       const stageLeads = leads.filter((l) => (l.pipelineStage || 'new') === stage);
                       const stageColors: Record<string, string> = { new: '#6b7280', contacted: '#3b82f6', qualified: '#8b5cf6', proposal: '#f59e0b', won: '#22c55e', lost: '#ef4444' };
                       return (
@@ -2783,7 +2903,7 @@ export function DashboardApp() {
                               placeholder="Type a reply..."
                               value={replyText}
                               onChange={(e) => setReplyText(e.target.value)}
-                              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSendReply(); }}}
+                              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSendReply(); } }}
                             />
                             <Button size="sm" onClick={handleSendReply} disabled={isSendingReply || !replyText.trim()}>
                               <Send className="h-3.5 w-3.5" />
@@ -2910,10 +3030,10 @@ export function DashboardApp() {
                                   rows={2}
                                   placeholder={
                                     node.type === 'message' ? 'Bot says...'
-                                    : node.type === 'condition' ? 'If input contains...'
-                                    : node.type === 'collect' ? 'Collect field (e.g. email)'
-                                    : node.type === 'handoff' ? 'Handoff reason...'
-                                    : 'Webhook URL'
+                                      : node.type === 'condition' ? 'If input contains...'
+                                        : node.type === 'collect' ? 'Collect field (e.g. email)'
+                                          : node.type === 'handoff' ? 'Handoff reason...'
+                                            : 'Webhook URL'
                                   }
                                   value={node.content || ''}
                                   onChange={(e) => handleUpdateFlowNodeContent(node.id, e.target.value)}
