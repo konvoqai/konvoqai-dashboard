@@ -1,6 +1,7 @@
 'use client';
 
 import { DashboardApp } from '@/components/DashboardApp';
+import { Suspense } from 'react';
 /*
 
 interface OnboardingStatusResponse {
@@ -10,7 +11,11 @@ interface OnboardingStatusResponse {
 */
 
 export default function DashboardPage() {
-  return <DashboardApp />;
+  return (
+    <Suspense>
+      <DashboardApp />
+    </Suspense>
+  );
 }
 
 /*

@@ -4662,6 +4662,28 @@ body::after {
   text-align: right;
 }
 
+/* ── Overview subnav group label ── */
+.ds-nav-sidebar-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 10px 10px 4px 10px;
+  opacity: 0.6;
+}
+
+/* ── Sub-item (indented) ── */
+.ds-nav-sidebar-item--sub {
+  padding-left: 22px;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+
+.ds-nav-sidebar-item--sub:hover {
+  color: var(--text-2);
+}
+
 /* Legacy sidebar kept for reference */
 .ds-nav {
   display: flex;
@@ -4772,11 +4794,36 @@ body::after {
   color: #ff6b6b;
 }
 
+/* ── Craft Console left panel scrollbar ── */
+.ds-craft-left {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+.ds-craft-left::-webkit-scrollbar {
+  width: 4px;
+}
+
+.ds-craft-left::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ds-craft-left::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.ds-craft-left::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
 /* ── Main content ── */
 .ds-main {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
+  height: calc(100vh - 52px);
+  max-height: calc(100vh - 52px);
 }
 
 .ds-section-wrap {
@@ -5139,11 +5186,1006 @@ body::after {
   gap: 20px;
 }
 
+/* ── Analytics section divider ── */
+.ds-anl-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ds-anl-group-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.ds-anl-group-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Analytics 3-col grid ── */
+.ds-anl-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+/* ── Analytics mini card ── */
+.ds-anl-mini-card {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s;
+}
+
+.ds-anl-mini-card:hover {
+  border-color: rgba(255, 255, 255, 0.13);
+}
+
+.ds-anl-mini-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ds-anl-mini-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.ds-anl-mini-icon {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--accent-muted);
+  color: var(--accent-strong);
+}
+
+.ds-anl-mini-value {
+  font-size: clamp(24px, 2vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--text-1);
+  line-height: 1;
+}
+
+.ds-anl-mini-desc {
+  font-size: 11.5px;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+
+/* ── Analytics surface card (for plan/knowledge) ── */
+.ds-anl-surface {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ds-anl-surface-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ds-anl-surface-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-3);
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ds-anl-surface-row:last-child {
+  border-bottom: none;
+}
+
+.ds-anl-surface-val {
+  font-weight: 700;
+  color: var(--text-1);
+  font-size: 13px;
+  letter-spacing: -0.02em;
+}
+
+.ds-anl-usage-bar {
+  height: 5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.ds-anl-usage-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.6s ease;
+}
+
+/* ── Empty state ── */
+.ds-anl-empty {
+  color: var(--text-3);
+  font-size: 13px;
+  padding: 32px 0;
+  text-align: center;
+}
+
+/* ── Response Quality cards ── */
+.ds-anl-quality-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.ds-anl-quality-card {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s;
+}
+
+.ds-anl-quality-card:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.ds-anl-quality-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.ds-anl-quality-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ds-anl-quality-val {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.ds-anl-quality-track {
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.ds-anl-quality-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s ease;
+}
+
+.ds-anl-quality-desc {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.ds-anl-quality-insight {
+  font-size: 12px;
+  color: var(--text-2);
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+  line-height: 1.4;
+  margin-top: auto;
+}
+
+/* ── Funnel page ── */
+.ds-anl-funnel-page {
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ds-anl-funnel-page-step {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ds-anl-funnel-page-step:last-of-type {
+  border-bottom: none;
+}
+
+.ds-anl-funnel-page-bar-wrap {
+  height: 10px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.ds-anl-funnel-page-bar {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.7s ease;
+  opacity: 0.85;
+}
+
+.ds-anl-funnel-page-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.ds-anl-funnel-page-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ds-anl-funnel-page-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.ds-anl-funnel-page-desc {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.ds-anl-funnel-page-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.ds-anl-funnel-page-count {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.ds-anl-funnel-page-pct {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  min-width: 36px;
+  text-align: right;
+}
+
+.ds-anl-funnel-page-drop {
+  font-size: 11px;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 99px;
+  padding: 2px 8px;
+}
+
+.ds-anl-funnel-summary {
+  padding: 16px 24px;
+  font-size: 13px;
+  color: var(--text-3);
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ds-anl-funnel-summary strong {
+  font-weight: 700;
+}
+
+/* ── Peak Hours large heatmap ── */
+.ds-anl-heatmap-lg {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 160px;
+  padding-bottom: 24px;
+  position: relative;
+}
+
+.ds-anl-heatmap-lg-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  position: relative;
+}
+
+.ds-anl-heatmap-lg-count {
+  font-size: 9px;
+  color: var(--text-3);
+  margin-bottom: 2px;
+  min-height: 12px;
+  line-height: 1;
+}
+
+.ds-anl-heatmap-lg-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.ds-anl-heatmap-lg-bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.4s ease;
+  min-height: 3px;
+}
+
+.ds-anl-heatmap-lg-tick {
+  position: absolute;
+  bottom: 0;
+  font-size: 9.5px;
+  color: var(--text-3);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* ── Top Questions page ── */
+.ds-anl-questions-page {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ds-anl-question-page-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 16px 18px;
+  transition: border-color 0.2s;
+}
+
+.ds-anl-question-page-item:hover {
+  border-color: rgba(255, 255, 255, 0.13);
+}
+
+.ds-anl-question-page-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-strong);
+  flex-shrink: 0;
+}
+
+.ds-anl-question-page-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ds-anl-question-page-text {
+  font-size: 13.5px;
+  color: var(--text-1);
+  line-height: 1.5;
+}
+
+.ds-anl-question-page-bar {
+  height: 3px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.ds-anl-question-page-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent-strong);
+  opacity: 0.6;
+  transition: width 0.5s ease;
+}
+
+/* ── Visitors page ── */
+.ds-anl-visitors-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.ds-anl-visitor-card {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.ds-anl-visitor-icon {
+  color: var(--accent-strong);
+  margin-bottom: 4px;
+}
+
+.ds-anl-visitor-val {
+  font-size: clamp(36px, 3vw, 48px);
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1;
+  color: var(--accent-strong);
+}
+
+.ds-anl-visitor-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.ds-anl-visitor-pct {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.ds-anl-visitors-bar {
+  height: 12px;
+  border-radius: 99px;
+  overflow: hidden;
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 12px;
+}
+
+.ds-anl-visitors-bar-new {
+  height: 100%;
+  background: var(--accent-strong);
+  transition: width 0.6s ease;
+}
+
+.ds-anl-visitors-bar-ret {
+  height: 100%;
+  background: #a78bfa;
+  opacity: 0.7;
+  transition: width 0.6s ease;
+}
+
+.ds-anl-visitors-legend {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.ds-anl-visitors-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.ds-anl-visitors-dot--new { background: var(--accent-strong); }
+.ds-anl-visitors-dot--ret { background: #a78bfa; }
+
+/* ══════════════════════════════
+   LIVE SESSIONS
+══════════════════════════════ */
+
+.ds-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ds-live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: livePulse 1.4s ease infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.75); }
+}
+
+.ds-live-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.ds-live-card {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ds-live-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ds-live-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+  margin-top: 5px;
+  animation: livePulse 1.4s ease infinite;
+}
+
+.ds-live-card-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1);
+  line-height: 1.4;
+}
+
+.ds-live-card-time {
+  font-size: 11px;
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
+.ds-live-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ds-live-view-btn {
+  margin-top: 4px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  align-self: flex-start;
+}
+
+.ds-live-view-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ══════════════════════════════
+   ESCALATION LOG
+══════════════════════════════ */
+
+.ds-esc-table-header {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr 1.5fr 1.5fr;
+  gap: 12px;
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+
+.ds-esc-row {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr 1.5fr 1.5fr;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  align-items: center;
+  transition: background 0.1s;
+}
+
+.ds-esc-row:last-child {
+  border-bottom: none;
+}
+
+.ds-esc-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ds-esc-status {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.ds-esc-status--pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.ds-esc-status--claimed {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.ds-esc-status--resolved {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-3);
+}
+
+/* ══════════════════════════════
+   BULK ACTIONS & LEAD SCORING
+══════════════════════════════ */
+
+.ds-bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent-muted) 50%, var(--surface));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.ds-bulk-btn {
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-1);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ds-bulk-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ds-bulk-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ds-bulk-btn--danger {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.2);
+}
+
+.ds-bulk-btn--danger:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.ds-lead-checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  accent-color: var(--accent-strong);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Lead scoring row */
+.ds-score-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+}
+
+.ds-score-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--accent-muted);
+  color: var(--accent-strong);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ds-score-info {
+  flex: 0 0 200px;
+  min-width: 0;
+}
+
+.ds-score-bar-wrap {
+  flex: 1;
+  min-width: 80px;
+}
+
+.ds-score-bar {
+  height: 7px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.ds-score-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.ds-score-val {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 80px;
+  justify-content: flex-end;
+}
+
+.ds-score-num {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ds-score-tier {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Quality / funnel bar (legacy small bar) ── */
+.ds-anl-qual-bar {
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+  display: flex;
+}
+
+.ds-anl-qual-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s ease;
+}
+
+/* ── Conversation Funnel ── */
+.ds-anl-funnel-step {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ds-anl-funnel-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.ds-anl-funnel-label {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.ds-anl-funnel-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.ds-anl-funnel-track {
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.ds-anl-funnel-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.7s ease;
+  opacity: 0.85;
+}
+
+.ds-anl-funnel-conv {
+  font-size: 11.5px;
+  color: var(--text-3);
+  margin-top: 6px;
+}
+
+.ds-anl-funnel-conv strong {
+  color: var(--text-2);
+}
+
+/* ── Peak Hours Heatmap ── */
+.ds-anl-heatmap {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 70px;
+  padding-bottom: 20px;
+  position: relative;
+}
+
+.ds-anl-heatmap-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  position: relative;
+}
+
+.ds-anl-heatmap-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.ds-anl-heatmap-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  transition: height 0.4s ease;
+  min-height: 4px;
+}
+
+.ds-anl-heatmap-tick {
+  position: absolute;
+  bottom: 0;
+  font-size: 9px;
+  color: var(--text-3);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.ds-anl-peak-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 99px;
+  padding: 2px 8px;
+}
+
+/* ── Top Questions ── */
+.ds-anl-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ds-anl-question-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ds-anl-question-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-strong);
+  min-width: 14px;
+  margin-top: 1px;
+}
+
+.ds-anl-question-text {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.45;
+}
+
+/* ── New vs Returning ── */
+.ds-anl-nvr {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 12px 0 4px;
+}
+
+.ds-anl-nvr-half {
+  flex: 1;
+  text-align: center;
+}
+
+.ds-anl-nvr-val {
+  font-size: clamp(26px, 2vw, 32px);
+  font-weight: 800;
+  color: var(--accent-strong);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.ds-anl-nvr-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+
+.ds-anl-nvr-pct {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+
+.ds-anl-nvr-divider {
+  width: 1px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
 /* ── Responsive ── */
 @media (max-width: 1024px) {
 
   .ds-metric-grid,
-  .ds-analytics-grid {
+  .ds-analytics-grid,
+  .ds-anl-quality-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -5159,8 +6201,24 @@ body::after {
 
   .ds-metric-grid,
   .ds-analytics-grid,
-  .ds-two-col {
+  .ds-two-col,
+  .ds-anl-quality-grid,
+  .ds-anl-visitors-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ds-esc-table-header,
+  .ds-esc-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ds-esc-table-header > div:nth-child(n+3),
+  .ds-esc-row > div:nth-child(n+3) {
+    display: none;
+  }
+
+  .ds-score-info {
+    flex: 0 0 120px;
   }
 
   .ds-section-wrap {

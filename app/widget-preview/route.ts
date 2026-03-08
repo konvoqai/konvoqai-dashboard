@@ -11,14 +11,10 @@ export async function GET() {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Widget Preview</title>
+    <title>Preview</title>
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      html, body {
-        width: 100%; height: 100%;
-        background: linear-gradient(180deg, #747678 0%, #7a7b7e 100%);
-        overflow: hidden;
-      }
+      html, body { width: 100%; height: 100%; background: #050505; }
     </style>
   </head>
   <body>
@@ -27,8 +23,6 @@ export async function GET() {
       api-url="${backendUrl}/api/v1/webhook"
       api-base-url="${backendUrl}"
       widget-key="preview"
-      banner-text="Konvoq AI"
-      banner-text-paragraph="Welcome to your live widget preview."
       auto-open="true"
     ></konvoq-chat>
     <script src="${backendUrl}/widget/konvoq-chat.js"></script>

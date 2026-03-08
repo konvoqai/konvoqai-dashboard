@@ -7,10 +7,12 @@ import { apiClient } from '@/lib/api/axios-instance';
 import { useLogout, useUser } from '@/lib/auth/auth-hooks';
 import {
   Activity,
+  AlertCircle,
   BarChart3,
   BookOpenText,
   Bot,
   Check,
+  CheckSquare,
   Copy,
   Crown,
   FileText,
@@ -18,7 +20,6 @@ import {
   Globe2,
   GripVertical,
   Inbox,
-  Key,
   LayoutDashboard,
   Lock,
   LogOut,
@@ -33,24 +34,35 @@ import {
   Send,
   Settings2,
   Sparkles,
+  Star,
   Trash2,
   Upload,
   User,
   Users,
   Webhook,
   X,
-  Zap,
+  Zap
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 // ─── Section types ──────────────────────────────────────────────────────────
 
 type DashboardSection =
-  | 'overview'
+  | 'anl-conversations'
+  | 'anl-quality'
+  | 'anl-funnel'
+  | 'anl-peak'
+  | 'anl-questions'
+  | 'anl-visitors'
+  | 'anl-leads'
+  | 'anl-knowledge'
+  | 'anl-integration'
   | 'sources'
   | 'widget'
+  | 'live'
+  | 'escalations'
   | 'chat'
   | 'feedback'
   | 'leads'
@@ -303,7 +315,17 @@ const sections: Array<{
   label: string;
   icon: typeof LayoutDashboard;
 }> = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'anl-conversations', label: 'Activity', icon: Activity },
+    { id: 'anl-quality', label: 'Response Quality', icon: BarChart3 },
+    { id: 'anl-funnel', label: 'Funnel', icon: Zap },
+    { id: 'anl-peak', label: 'Peak Hours', icon: Activity },
+    { id: 'anl-questions', label: 'Top Questions', icon: Search },
+    { id: 'anl-visitors', label: 'Visitors', icon: User },
+    { id: 'anl-leads', label: 'Leads & Feedback', icon: Users },
+    { id: 'anl-knowledge', label: 'Knowledge & Plan', icon: BookOpenText },
+    { id: 'anl-integration', label: 'Integration', icon: Globe2 },
+    { id: 'live', label: 'Live Sessions', icon: Monitor },
+    { id: 'escalations', label: 'Escalation Log', icon: AlertCircle },
     { id: 'widget', label: 'Craft Console', icon: Settings2 },
     { id: 'persona', label: 'Persona', icon: Bot },
     { id: 'navigation', label: 'Navigation', icon: Navigation2 },
@@ -327,8 +349,8 @@ const appGroups: Array<{
   label: string;
   sections: DashboardSection[];
 }> = [
-    { id: 'overview', icon: LayoutDashboard, label: 'Overview', sections: ['overview'] },
-    { id: 'conversations', icon: MessagesSquare, label: 'Conversations', sections: ['chat', 'feedback', 'leads', 'crm', 'inbox'] },
+    { id: 'overview', icon: LayoutDashboard, label: 'Overview', sections: ['anl-conversations', 'anl-quality', 'anl-funnel', 'anl-peak', 'anl-questions', 'anl-visitors', 'anl-leads', 'anl-knowledge', 'anl-integration'] },
+    { id: 'conversations', icon: MessagesSquare, label: 'Conversations', sections: ['live', 'escalations', 'chat', 'feedback', 'leads', 'crm', 'inbox'] },
     { id: 'knowledge', icon: BookOpenText, label: 'Knowledge', sections: ['sources'] },
     { id: 'aiconfig', icon: Bot, label: 'AI Config', sections: ['widget', 'persona', 'navigation', 'flows', 'branding'] },
   ];
@@ -416,13 +438,32 @@ const LEAD_STATUSES = ['new', 'contacted', 'qualified', 'converted', 'lost'];
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+const VALID_SECTIONS: DashboardSection[] = [
+  'anl-conversations','anl-quality','anl-funnel','anl-peak','anl-questions','anl-visitors',
+  'anl-leads','anl-knowledge','anl-integration',
+  'sources','widget','live','escalations','chat','feedback','leads','settings','persona','branding','navigation','crm','inbox','flows','plan'
+];
+
 export function DashboardApp() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading } = useUser();
   const { logout } = useLogout();
 
-  // Navigation
-  const [activeSection, setActiveSection] = useState<DashboardSection>('overview');
+  // Navigation — persist section in URL ?section=xxx
+  const initialSection = (() => {
+    const s = searchParams.get('section') as DashboardSection | null;
+    return s && VALID_SECTIONS.includes(s) ? s : 'anl-conversations';
+  })();
+  const [activeSection, setActiveSection] = useState<DashboardSection>(initialSection);
+
+  const navigateTo = useCallback((section: DashboardSection) => {
+    setActiveSection(section);
+    const params = new URLSearchParams(window.location.search);
+    params.set('section', section);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [router]);
+
   const [isBooting, setIsBooting] = useState(true);
   const [, setIsRefreshing] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -454,6 +495,8 @@ export function DashboardApp() {
   const [embedCode, setEmbedCode] = useState('');
   const [brandUrl, setBrandUrl] = useState('');
   const [isFetchingBrand, setIsFetchingBrand] = useState(false);
+  const [widgetPreviewReady, setWidgetPreviewReady] = useState(false);
+  const widgetPreviewIframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // Chat
   const [chatSessions, setChatSessions] = useState<ChatSessionSummary[]>([]);
@@ -462,6 +505,8 @@ export function DashboardApp() {
   const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
   const [chatSearch, setChatSearch] = useState('');
   const [chatStatusFilter, setChatStatusFilter] = useState('all');
+  const [chatDateFrom, setChatDateFrom] = useState('');
+  const [chatDateTo, setChatDateTo] = useState('');
 
   // Feedback
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
@@ -475,7 +520,10 @@ export function DashboardApp() {
   const [webhookUrl, setWebhookUrl] = useState('');
   const [isSavingWebhook, setIsSavingWebhook] = useState(false);
   const [isTestingWebhook, setIsTestingWebhook] = useState(false);
-  const [leadsTab, setLeadsTab] = useState<'list' | 'webhook' | 'followup'>('list');
+  const [leadsTab, setLeadsTab] = useState<'list' | 'webhook' | 'followup' | 'scoring'>('list');
+  const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [isBulkContacting, setIsBulkContacting] = useState(false);
 
   // Settings
   const [profile, setProfile] = useState<ProfileData>({});
@@ -734,10 +782,22 @@ export function DashboardApp() {
     if (activeSection === 'persona') void loadPersona();
     if (activeSection === 'navigation') void loadNavigation();
     if (activeSection === 'branding') void loadBranding();
-    if (activeSection === 'inbox') void loadInbox(inboxStatusFilter);
+    if (activeSection === 'inbox' || activeSection === 'escalations') void loadInbox('all');
     if (activeSection === 'flows') void loadFlows();
     if (activeSection === 'leads') void loadFollowUp();
   }, [activeSection, loadSettingsData, loadWebhook, loadPersona, loadNavigation, loadBranding, loadInbox, inboxStatusFilter, loadFlows, loadFollowUp]);
+
+  // ─── Live sessions auto-refresh ────────────────────────────────────────────
+
+  useEffect(() => {
+    if (activeSection !== 'live') return;
+    const interval = setInterval(() => {
+      void apiClient.get('/dashboard/chat-sessions').then((res) => {
+        setChatSessions(res.data?.sessions || []);
+      }).catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [activeSection]);
 
   // ─── Handlers: auth ────────────────────────────────────────────────────────
 
@@ -808,6 +868,28 @@ export function DashboardApp() {
     setWidgetSaved(false);
     setWidgetConfig((current) => ({ ...current, ...updates }));
   };
+
+  const postWidgetConfig = useCallback((config = widgetConfig) => {
+    const target = widgetPreviewIframeRef.current?.contentWindow;
+    if (!target) return;
+    target.postMessage({ type: 'konvoq:widget-config', config }, '*');
+  }, [widgetConfig]);
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === 'konvoq:preview-ready') {
+        setWidgetPreviewReady(true);
+        postWidgetConfig();
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [postWidgetConfig]);
+
+  useEffect(() => {
+    if (!widgetPreviewReady) return;
+    postWidgetConfig();
+  }, [widgetConfig, widgetPreviewReady, postWidgetConfig]);
 
   const handleSaveWidget = async () => {
     setIsSavingWidget(true);
@@ -887,6 +969,51 @@ export function DashboardApp() {
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Failed to delete lead'));
     } finally { setDeletingLeadId(null); }
+  };
+
+  const handleExportCSV = () => {
+    const selected = leads.filter((l) => selectedLeadIds.has(l.id));
+    if (selected.length === 0) { toast.error('Select at least one lead'); return; }
+    const rows = [['Name', 'Email', 'Phone', 'Status', 'Source', 'Message', 'Created']];
+    selected.forEach((l) => rows.push([l.name || '', l.email || '', l.phone || '', l.status || 'new', l.source || '', l.message || '', formatDateTime(l.createdAt)]));
+    const csv = rows.map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'leads.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${selected.length} lead(s)`);
+  };
+
+  const handleBulkMarkContacted = async () => {
+    if (selectedLeadIds.size === 0) return;
+    setIsBulkContacting(true);
+    const count = selectedLeadIds.size;
+    try {
+      await Promise.all(Array.from(selectedLeadIds).map((id) => apiClient.patch(`/dashboard/leads/${id}`, { status: 'contacted' })));
+      setLeads((prev) => prev.map((l) => selectedLeadIds.has(l.id) ? { ...l, status: 'contacted' } : l));
+      setSelectedLeadIds(new Set());
+      toast.success(`${count} lead(s) marked as contacted`);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Bulk update failed'));
+    } finally { setIsBulkContacting(false); }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedLeadIds.size === 0) return;
+    if (!confirm(`Delete ${selectedLeadIds.size} lead(s)? This cannot be undone.`)) return;
+    setIsBulkDeleting(true);
+    const count = selectedLeadIds.size;
+    try {
+      await Promise.all(Array.from(selectedLeadIds).map((id) => apiClient.delete(`/dashboard/leads/${id}`)));
+      setLeads((prev) => prev.filter((l) => !selectedLeadIds.has(l.id)));
+      setSelectedLeadIds(new Set());
+      toast.success(`${count} lead(s) deleted`);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Bulk delete failed'));
+    } finally { setIsBulkDeleting(false); }
   };
 
   const handleSaveWebhook = async () => {
@@ -1146,6 +1273,55 @@ export function DashboardApp() {
   }));
   const activeDays7d = Object.keys(eventsByDay).length;
 
+  // ── Conversation quality metrics ─────────────────────────────────────────
+  const totalSessionsCount = chatSessions.length;
+  const completedSessionsCount = chatSessions.filter((s) => s.status === 'completed').length;
+  const resolutionRate = totalSessionsCount > 0 ? Math.round((completedSessionsCount / totalSessionsCount) * 100) : 0;
+  const totalMsgs = chatSessions.reduce((a, s) => a + (s.messageCount || 0), 0);
+  const avgMsgsPerSession = totalSessionsCount > 0 ? Math.round(totalMsgs / totalSessionsCount) : 0;
+  const unansweredCount = chatSessions.filter((s) => (s.messageCount || 0) <= 1).length;
+  const unansweredRate = totalSessionsCount > 0 ? Math.round((unansweredCount / totalSessionsCount) * 100) : 0;
+
+  // ── Conversation funnel ───────────────────────────────────────────────────
+  const funnelStarted = analytics.chatSessions ?? totalSessionsCount;
+  const funnelCompleted = completedSessionsCount;
+  const funnelLeads = leads.length || analytics.leads || 0;
+  const funnelMaxVal = Math.max(1, funnelStarted);
+
+  // ── Peak hours heatmap ────────────────────────────────────────────────────
+  const eventsByHour = widgetAnalytics.reduce((acc, item) => {
+    if (item.createdAt) {
+      const h = new Date(item.createdAt).getHours();
+      acc[h] = (acc[h] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<number, number>);
+  const maxHourCount = Math.max(1, ...Array.from({ length: 24 }, (_, i) => eventsByHour[i] || 0));
+  const peakHour = Array.from({ length: 24 }, (_, i) => i).reduce(
+    (max, h) => (eventsByHour[h] || 0) > (eventsByHour[max] || 0) ? h : max, 0
+  );
+  const fmtHour = (h: number) => {
+    if (h === 0) return '12a';
+    if (h < 12) return `${h}a`;
+    if (h === 12) return '12p';
+    return `${h - 12}p`;
+  };
+
+  // ── Top questions ─────────────────────────────────────────────────────────
+  const topQuestions = Array.from(
+    new Map(
+      chatSessions
+        .filter((s) => s.lastMessagePreview && s.lastMessagePreview.trim().length > 4)
+        .map((s) => [s.lastMessagePreview!.trim().toLowerCase().slice(0, 60), s.lastMessagePreview!.trim()])
+    ).values()
+  ).slice(0, 6);
+
+  // ── New vs returning visitors ─────────────────────────────────────────────
+  const returningVisitors = chatSessions.filter((s) => (s.messageCount || 0) > 4).length;
+  const newVisitors = Math.max(0, totalSessionsCount - returningVisitors);
+  const newPct = totalSessionsCount > 0 ? Math.round((newVisitors / totalSessionsCount) * 100) : 0;
+  const returningPct = totalSessionsCount > 0 ? Math.round((returningVisitors / totalSessionsCount) * 100) : 0;
+
   const planType = (usage.planType || user?.plan_type || 'free').toString();
   const workspaceName = user?.fullName || user?.email?.split('@')[0] || 'Workspace';
   const userInitial = (user?.fullName || user?.email || 'U')[0].toUpperCase();
@@ -1155,8 +1331,33 @@ export function DashboardApp() {
   const filteredChatSessions = chatSessions.filter((s) => {
     const matchSearch = !chatSearch || (s.lastMessagePreview || '').toLowerCase().includes(chatSearch.toLowerCase());
     const matchStatus = chatStatusFilter === 'all' || (s.status || 'active') === chatStatusFilter;
-    return matchSearch && matchStatus;
+    const matchFrom = !chatDateFrom || (s.createdAt && s.createdAt >= chatDateFrom);
+    const matchTo = !chatDateTo || (s.createdAt && s.createdAt <= chatDateTo + 'T23:59:59');
+    return matchSearch && matchStatus && matchFrom && matchTo;
   });
+
+  // Active / live sessions
+  const activeSessions2 = chatSessions.filter((s) => (s.status || 'active') === 'active');
+
+  // Lead scoring
+  const scoredLeads = leads.map((lead) => {
+    let score = 20;
+    if (lead.email) score += 20;
+    if (lead.name) score += 10;
+    if (lead.phone) score += 15;
+    const st = lead.status || 'new';
+    if (st === 'qualified') score += 20;
+    else if (st === 'converted') score += 25;
+    else if (st === 'contacted') score += 10;
+    if (lead.message && lead.message.length > 20) score += 10;
+    if (lead.createdAt) {
+      const daysSince = (Date.now() - new Date(lead.createdAt).getTime()) / 86400000;
+      if (daysSince < 1) score += 15;
+      else if (daysSince < 7) score += 8;
+      else if (daysSince < 30) score += 3;
+    }
+    return { ...lead, score: Math.min(100, score) };
+  }).sort((a, b) => b.score - a.score);
 
   // Filtered feedback
   const filteredFeedback = feedback.filter((f) =>
@@ -1217,7 +1418,7 @@ export function DashboardApp() {
                 <div className="ds-user-menu-info">
                   <span className="ds-user-menu-email">{user.email}</span>
                 </div>
-                <button type="button" className="ds-user-menu-item" onClick={() => { setActiveSection('settings'); setShowUserMenu(false); }}>
+                <button type="button" className="ds-user-menu-item" onClick={() => { navigateTo('settings'); setShowUserMenu(false); }}>
                   <User className="h-3.5 w-3.5" />
                   Profile &amp; Settings
                 </button>
@@ -1247,7 +1448,7 @@ export function DashboardApp() {
                   data-active={activeGroup === group.id && activeSection !== 'settings'}
                   title={group.label}
                   onClick={() => {
-                    if (activeGroup !== group.id || activeSection === 'settings') setActiveSection(group.sections[0]);
+                    if (activeGroup !== group.id || activeSection === 'settings') navigateTo(group.sections[0]);
                   }}
                 >
                   <Icon className="h-[18px] w-[18px]" />
@@ -1261,7 +1462,7 @@ export function DashboardApp() {
               className="ds-rail-item"
               data-active={activeSection === 'plan'}
               title="Plan & Billing"
-              onClick={() => setActiveSection('plan')}
+              onClick={() => navigateTo('plan')}
             >
               <Crown className="h-[18px] w-[18px]" />
             </button>
@@ -1270,7 +1471,7 @@ export function DashboardApp() {
               className="ds-rail-item"
               data-active={activeSection === 'settings'}
               title="Settings"
-              onClick={() => setActiveSection('settings')}
+              onClick={() => navigateTo('settings')}
             >
               <Settings2 className="h-[18px] w-[18px]" />
             </button>
@@ -1309,7 +1510,7 @@ export function DashboardApp() {
                     type="button"
                     className="ds-nav-sidebar-item"
                     data-active={activeSection === sectionId}
-                    onClick={() => setActiveSection(sectionId)}
+                    onClick={() => navigateTo(sectionId)}
                   >
                     <Icon className="h-3.5 w-3.5" />
                     <span>{section.label}</span>
@@ -1353,25 +1554,19 @@ export function DashboardApp() {
         {/* Main content */}
         <main className="ds-main">
 
-          {/* ── Overview ── */}
-          {activeSection === 'overview' ? (
+          {/* ── Activity Overview ── */}
+          {activeSection === 'anl-conversations' ? (
             <div className="ds-section-wrap">
-              <div className="ds-page-header">
-                <div className="ds-page-header-simple">
-                  <h1 className="ds-page-title">Dashboard Overview</h1>
-                  <p className="ds-page-subtitle">Live performance metrics and activity trends.</p>
-                </div>
-                <div className="ds-chatbot-pill">
-                  <span className="ds-active-label">● Active</span>
-                </div>
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Activity</h1>
+                <p className="ds-page-subtitle">Messaging volume and engagement over time.</p>
               </div>
-
               <div className="ds-metric-grid">
                 {[
-                  { label: 'Knowledge Pages', value: formatNumber(stats.scrapedPages), desc: 'Total pages indexed for RAG', icon: BookOpenText },
-                  { label: 'Messages', value: formatNumber(analytics.widgetMessages), desc: 'Total messages exchanged', icon: MessageSquare },
-                  { label: 'Leads Captured', value: formatNumber(leads.length || analytics.leads), desc: 'Visitors who left contact info', icon: Users },
-                  { label: 'Total Sessions', value: formatNumber(analytics.chatSessions), desc: 'Chatbot sessions this period', icon: MessagesSquare },
+                  { label: 'Total Messages', value: formatNumber(analytics.widgetMessages), desc: 'Messages exchanged via widget', icon: MessageSquare },
+                  { label: 'Chat Sessions', value: formatNumber(analytics.chatSessions), desc: 'Unique conversation sessions', icon: MessagesSquare },
+                  { label: 'Widget Views', value: formatNumber(analytics.widgetViews), desc: 'Widget load events', icon: Monitor },
+                  { label: 'Active Days (7d)', value: formatNumber(activeDays7d), desc: 'Days with activity this week', icon: Activity },
                 ].map((card) => (
                   <div key={card.label} className="ds-metric-card">
                     <div className="ds-metric-card-head">
@@ -1383,32 +1578,349 @@ export function DashboardApp() {
                   </div>
                 ))}
               </div>
+              <div className="ds-chart-card">
+                <div className="ds-chart-header">
+                  <Activity className="h-4 w-4 text-[var(--accent-strong)]" />
+                  <h2 className="ds-chart-title">7-Day Activity</h2>
+                </div>
+                <ActivityChart data={chartData} />
+              </div>
+            </div>
+          ) : null}
 
-              <div className="ds-analytics-grid">
+          {/* ── Response Quality ── */}
+          {activeSection === 'anl-quality' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Response Quality</h1>
+                <p className="ds-page-subtitle">How well your AI resolves visitor queries.</p>
+              </div>
+              <div className="ds-anl-quality-grid">
                 {[
-                  { label: 'Active Days (7d)', value: formatNumber(activeDays7d), desc: 'Days with widget events', icon: Activity },
-                  { label: 'Widget Views', value: formatNumber(analytics.widgetViews), desc: 'Widget load events', icon: BarChart3 },
-                  { label: 'Ratings', value: formatNumber(analytics.totalRatings), desc: 'Visitor satisfaction ratings', icon: Zap },
                   {
-                    label: 'Quota Used',
-                    value: usageLimit ? `${usagePercent}%` : '∞',
-                    desc: usageRemaining === null || usageRemaining === undefined
-                      ? 'Unlimited plan'
-                      : `${formatNumber(usageRemaining)} remaining`,
-                    icon: BarChart3,
+                    label: 'Resolution Rate',
+                    value: `${resolutionRate}%`,
+                    desc: 'Sessions marked as completed',
+                    pct: resolutionRate,
+                    color: resolutionRate >= 70 ? '#34d399' : resolutionRate >= 40 ? '#f59e0b' : '#ef4444',
+                    insight: resolutionRate >= 70 ? 'Great — most visitors find answers' : resolutionRate >= 40 ? 'Moderate — room to improve responses' : 'Low — review unanswered topics',
                   },
-                ].map((card) => (
-                  <div key={card.label} className="ds-metric-card">
-                    <div className="ds-metric-card-head">
-                      <span className="ds-metric-label">{card.label}</span>
-                      <div className="ds-metric-icon"><card.icon className="h-4 w-4" /></div>
+                  {
+                    label: 'Avg Messages / Session',
+                    value: String(avgMsgsPerSession),
+                    desc: 'Average back-and-forth per conversation',
+                    pct: Math.min(100, avgMsgsPerSession * 10),
+                    color: 'var(--accent-strong)',
+                    insight: avgMsgsPerSession <= 2 ? 'Short sessions — add more depth' : avgMsgsPerSession <= 6 ? 'Healthy engagement depth' : 'Long sessions — may indicate confusion',
+                  },
+                  {
+                    label: 'Unanswered Rate',
+                    value: `${unansweredRate}%`,
+                    desc: 'Sessions with 1 or fewer messages',
+                    pct: unansweredRate,
+                    color: unansweredRate > 30 ? '#ef4444' : unansweredRate > 15 ? '#f59e0b' : '#34d399',
+                    insight: unansweredRate > 30 ? 'High drop-off — check widget placement' : unansweredRate > 15 ? 'Some drop-off — tune the welcome prompt' : 'Low drop-off — visitors are engaging',
+                  },
+                ].map((item) => (
+                  <div key={item.label} className="ds-anl-quality-card">
+                    <div className="ds-anl-quality-top">
+                      <span className="ds-anl-quality-label">{item.label}</span>
+                      <span className="ds-anl-quality-val" style={{ color: item.color }}>{item.value}</span>
                     </div>
-                    <div className="ds-metric-value">{card.value}</div>
-                    <div className="ds-metric-desc">{card.desc}</div>
+                    <div className="ds-anl-quality-track">
+                      <div className="ds-anl-quality-fill" style={{ width: `${item.pct}%`, background: item.color }} />
+                    </div>
+                    <div className="ds-anl-quality-desc">{item.desc}</div>
+                    <div className="ds-anl-quality-insight">{item.insight}</div>
                   </div>
                 ))}
               </div>
+              {totalSessionsCount === 0 && (
+                <div className="ds-anl-empty">No session data yet. Stats will appear once visitors chat.</div>
+              )}
+            </div>
+          ) : null}
 
+          {/* ── Conversation Funnel ── */}
+          {activeSection === 'anl-funnel' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Conversation Funnel</h1>
+                <p className="ds-page-subtitle">Track how visitors move from chat to lead.</p>
+              </div>
+              <div className="ds-anl-funnel-page">
+                {[
+                  { label: 'Started', value: funnelStarted, color: 'var(--accent-strong)', desc: 'Visitors who opened a chat session' },
+                  { label: 'Completed', value: funnelCompleted, color: '#a78bfa', desc: 'Sessions that reached a resolution' },
+                  { label: 'Lead Captured', value: funnelLeads, color: '#34d399', desc: 'Visitors who left contact info' },
+                ].map((step, i, arr) => {
+                  const pct = i === 0 ? 100 : Math.round((step.value / Math.max(1, arr[0].value)) * 100);
+                  const dropPct = i > 0 ? Math.round(((arr[i - 1].value - step.value) / Math.max(1, arr[i - 1].value)) * 100) : 0;
+                  return (
+                    <div key={step.label} className="ds-anl-funnel-page-step">
+                      <div className="ds-anl-funnel-page-bar-wrap">
+                        <div
+                          className="ds-anl-funnel-page-bar"
+                          style={{ width: `${pct}%`, background: step.color }}
+                        />
+                      </div>
+                      <div className="ds-anl-funnel-page-meta">
+                        <div className="ds-anl-funnel-page-left">
+                          <span className="ds-anl-funnel-page-label">{step.label}</span>
+                          <span className="ds-anl-funnel-page-desc">{step.desc}</span>
+                        </div>
+                        <div className="ds-anl-funnel-page-right">
+                          <span className="ds-anl-funnel-page-count" style={{ color: step.color }}>{formatNumber(step.value)}</span>
+                          <span className="ds-anl-funnel-page-pct">{pct}%</span>
+                          {i > 0 && dropPct > 0 && (
+                            <span className="ds-anl-funnel-page-drop">−{dropPct}% drop</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {funnelStarted > 0 && (
+                  <div className="ds-anl-funnel-summary">
+                    Overall conversion: <strong style={{ color: '#34d399' }}>{Math.round((funnelLeads / funnelStarted) * 100)}%</strong> of sessions became leads
+                  </div>
+                )}
+              </div>
+              {funnelStarted === 0 && (
+                <div className="ds-anl-empty">No sessions yet. Funnel will populate once visitors chat.</div>
+              )}
+            </div>
+          ) : null}
+
+          {/* ── Peak Hours ── */}
+          {activeSection === 'anl-peak' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Peak Hours</h1>
+                <p className="ds-page-subtitle">When your visitors are most active.</p>
+              </div>
+              <div className="ds-anl-surface" style={{ padding: '24px 24px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                  <div className="ds-anl-surface-title" style={{ margin: 0 }}>
+                    <Activity className="h-3.5 w-3.5 text-[var(--accent-strong)]" />
+                    Hourly Traffic Distribution
+                  </div>
+                  {widgetAnalytics.length > 0 && (
+                    <span className="ds-anl-peak-badge">Peak: {fmtHour(peakHour)}</span>
+                  )}
+                </div>
+                <div className="ds-anl-heatmap-lg">
+                  {Array.from({ length: 24 }, (_, h) => {
+                    const cnt = eventsByHour[h] || 0;
+                    const pct = Math.round((cnt / maxHourCount) * 100);
+                    const isPeak = h === peakHour && cnt > 0;
+                    return (
+                      <div key={h} className="ds-anl-heatmap-lg-col" title={`${fmtHour(h)}: ${cnt} events`}>
+                        <div className="ds-anl-heatmap-lg-count">{cnt > 0 ? cnt : ''}</div>
+                        <div className="ds-anl-heatmap-lg-bar-wrap">
+                          <div
+                            className="ds-anl-heatmap-lg-bar"
+                            style={{
+                              height: `${Math.max(3, pct)}%`,
+                              background: isPeak ? 'var(--accent-strong)' : cnt > 0 ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.05)',
+                              boxShadow: isPeak ? '0 0 12px rgba(139,92,246,0.4)' : 'none',
+                            }}
+                          />
+                        </div>
+                        <div className="ds-anl-heatmap-lg-tick">{fmtHour(h)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {widgetAnalytics.length === 0 && (
+                  <div className="ds-anl-empty" style={{ marginTop: 0 }}>No activity data yet. Traffic will appear once visitors use your widget.</div>
+                )}
+              </div>
+            </div>
+          ) : null}
+
+          {/* ── Top Questions ── */}
+          {activeSection === 'anl-questions' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Top Questions</h1>
+                <p className="ds-page-subtitle">Most recent unique questions visitors asked.</p>
+              </div>
+              {topQuestions.length === 0 ? (
+                <div className="ds-anl-empty">No questions yet. Data populates from chat sessions.</div>
+              ) : (
+                <div className="ds-anl-questions-page">
+                  {topQuestions.map((q, i) => (
+                    <div key={i} className="ds-anl-question-page-item">
+                      <div className="ds-anl-question-page-rank">
+                        <span>{i + 1}</span>
+                      </div>
+                      <div className="ds-anl-question-page-body">
+                        <div className="ds-anl-question-page-text">{q}</div>
+                        <div className="ds-anl-question-page-bar">
+                          <div
+                            className="ds-anl-question-page-fill"
+                            style={{ width: `${Math.max(10, 100 - i * 14)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {/* ── New vs Returning Visitors ── */}
+          {activeSection === 'anl-visitors' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Visitors</h1>
+                <p className="ds-page-subtitle">New vs returning visitor breakdown.</p>
+              </div>
+              <div className="ds-anl-visitors-grid">
+                <div className="ds-anl-visitor-card ds-anl-visitor-card--new">
+                  <div className="ds-anl-visitor-icon">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div className="ds-anl-visitor-val">{formatNumber(newVisitors)}</div>
+                  <div className="ds-anl-visitor-label">New Visitors</div>
+                  <div className="ds-anl-visitor-pct">{newPct}% of sessions</div>
+                </div>
+                <div className="ds-anl-visitor-card ds-anl-visitor-card--ret">
+                  <div className="ds-anl-visitor-icon" style={{ color: '#a78bfa' }}>
+                    <Users className="h-5 w-5" />
+                  </div>
+                  <div className="ds-anl-visitor-val" style={{ color: '#a78bfa' }}>{formatNumber(returningVisitors)}</div>
+                  <div className="ds-anl-visitor-label">Returning</div>
+                  <div className="ds-anl-visitor-pct">{returningPct}% of sessions</div>
+                </div>
+              </div>
+              {totalSessionsCount > 0 && (
+                <div className="ds-anl-surface" style={{ padding: '20px 24px' }}>
+                  <div className="ds-anl-surface-title" style={{ marginBottom: 14 }}>
+                    <BarChart3 className="h-3.5 w-3.5 text-[var(--accent-strong)]" />
+                    Session Breakdown
+                  </div>
+                  <div className="ds-anl-visitors-bar">
+                    <div className="ds-anl-visitors-bar-new" style={{ width: `${newPct}%` }} title={`New: ${newPct}%`} />
+                    <div className="ds-anl-visitors-bar-ret" style={{ width: `${returningPct}%` }} title={`Returning: ${returningPct}%`} />
+                  </div>
+                  <div className="ds-anl-visitors-legend">
+                    <span><span className="ds-anl-visitors-dot ds-anl-visitors-dot--new" />New — {newPct}%</span>
+                    <span><span className="ds-anl-visitors-dot ds-anl-visitors-dot--ret" />Returning — {returningPct}%</span>
+                  </div>
+                </div>
+              )}
+              {totalSessionsCount === 0 && (
+                <div className="ds-anl-empty">No session data yet. Visitor stats appear once people use your widget.</div>
+              )}
+            </div>
+          ) : null}
+
+          {/* ── Leads & Feedback Analytics ── */}
+          {activeSection === 'anl-leads' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Leads &amp; Feedback</h1>
+                <p className="ds-page-subtitle">Contact captures and visitor satisfaction data.</p>
+              </div>
+              <div className="ds-anl-grid-3">
+                <div className="ds-anl-mini-card">
+                  <div className="ds-anl-mini-head">
+                    <span className="ds-anl-mini-label">Leads Captured</span>
+                    <div className="ds-anl-mini-icon"><Users className="h-3.5 w-3.5" /></div>
+                  </div>
+                  <div className="ds-anl-mini-value">{formatNumber(leads.length || analytics.leads)}</div>
+                  <div className="ds-anl-mini-desc">Visitors who left contact info</div>
+                </div>
+                <div className="ds-anl-mini-card">
+                  <div className="ds-anl-mini-head">
+                    <span className="ds-anl-mini-label">Ratings</span>
+                    <div className="ds-anl-mini-icon"><Zap className="h-3.5 w-3.5" /></div>
+                  </div>
+                  <div className="ds-anl-mini-value">{formatNumber(analytics.totalRatings)}</div>
+                  <div className="ds-anl-mini-desc">Visitor satisfaction ratings</div>
+                </div>
+                <div className="ds-anl-mini-card">
+                  <div className="ds-anl-mini-head">
+                    <span className="ds-anl-mini-label">Feedback Items</span>
+                    <div className="ds-anl-mini-icon"><Send className="h-3.5 w-3.5" /></div>
+                  </div>
+                  <div className="ds-anl-mini-value">{formatNumber(feedback.length)}</div>
+                  <div className="ds-anl-mini-desc">Total feedback submissions</div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {/* ── Knowledge & Plan Analytics ── */}
+          {activeSection === 'anl-knowledge' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Knowledge &amp; Plan</h1>
+                <p className="ds-page-subtitle">Knowledge base stats and plan usage.</p>
+              </div>
+              <div className="ds-two-col">
+                <div className="ds-anl-surface">
+                  <div className="ds-anl-surface-title">
+                    <BookOpenText className="h-3.5 w-3.5 text-[var(--accent-strong)]" />
+                    Knowledge Base
+                  </div>
+                  <div className="ds-anl-surface-row">
+                    <span>Pages Indexed</span>
+                    <span className="ds-anl-surface-val">{formatNumber(stats.scrapedPages)}</span>
+                  </div>
+                  <div className="ds-anl-surface-row">
+                    <span>Documents Uploaded</span>
+                    <span className="ds-anl-surface-val">{formatNumber(documents.length)}</span>
+                  </div>
+                  <div className="ds-anl-surface-row">
+                    <span>Data Sources</span>
+                    <span className="ds-anl-surface-val">{formatNumber(sources.length)}</span>
+                  </div>
+                </div>
+                <div className="ds-anl-surface">
+                  <div className="ds-anl-surface-title">
+                    <BarChart3 className="h-3.5 w-3.5 text-[var(--accent-strong)]" />
+                    Plan &amp; Usage
+                  </div>
+                  <div className="ds-anl-surface-row">
+                    <span>Conversations Used</span>
+                    <span className="ds-anl-surface-val">
+                      {formatNumber(usage.conversationsUsed ?? 0)}
+                      {usageLimit ? ` / ${formatNumber(usageLimit)}` : ' / ∞'}
+                    </span>
+                  </div>
+                  {usageLimit && usageLimit > 0 ? (
+                    <div className="ds-anl-usage-bar">
+                      <div className="ds-anl-usage-bar-fill" style={{ width: `${usagePercent}%`, background: usageBarColor }} />
+                    </div>
+                  ) : null}
+                  <div className="ds-anl-surface-row">
+                    <span>Remaining</span>
+                    <span className="ds-anl-surface-val">
+                      {usageRemaining === null || usageRemaining === undefined ? '∞' : formatNumber(usageRemaining)}
+                    </span>
+                  </div>
+                  {usage.resetDate && (
+                    <div className="ds-anl-surface-row">
+                      <span>Resets on</span>
+                      <span className="ds-anl-surface-val">{formatDate(usage.resetDate)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {/* ── Integration ── */}
+          {activeSection === 'anl-integration' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Integration</h1>
+                <p className="ds-page-subtitle">Embed your widget on any website.</p>
+              </div>
               {embedCode ? (
                 <div className="ds-embed-strip">
                   <span className="ds-embed-strip-label">Embed Script</span>
@@ -1422,15 +1934,11 @@ export function DashboardApp() {
                     Copy
                   </button>
                 </div>
-              ) : null}
-
-              <div className="ds-chart-card">
-                <div className="ds-chart-header">
-                  <Activity className="h-4 w-4 text-[var(--accent-strong)]" />
-                  <h2 className="ds-chart-title">Last 7 Days Activity</h2>
+              ) : (
+                <div className="ds-anl-surface" style={{ color: 'var(--text-3)', fontSize: 13 }}>
+                  No embed code available yet.
                 </div>
-                <ActivityChart data={chartData} />
-              </div>
+              )}
             </div>
           ) : null}
 
@@ -1531,12 +2039,11 @@ export function DashboardApp() {
 
           {/* ── Craft Console ── */}
           {activeSection === 'widget' ? (
-            <div className="ds-section-wrap">
-              <div className="ds-page-header-simple">
-                <h1 className="ds-page-title">Craft Console</h1>
-                <p className="ds-page-subtitle">Configure your widget appearance, security, and get the install script.</p>
-              </div>
-              <div className="ds-two-col">
+            <div style={{ display: 'flex', height: 'calc(100vh - 52px)', overflow: 'hidden' }}>
+              <style>{`.ds-craft-left::-webkit-scrollbar{width:4px}.ds-craft-left::-webkit-scrollbar-track{background:transparent}.ds-craft-left::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:10px}.ds-craft-left::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.22)}.ds-craft-left{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.12) transparent}`}</style>
+              {/* Left: scrollable settings panel */}
+              <div className="ds-craft-left" style={{ flex: '0 0 50%', overflowY: 'auto', padding: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
+
                 <div className="section-surface p-6">
                   <div className="mb-5 flex items-center justify-between">
                     <h2 className="text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">Widget settings</h2>
@@ -1709,127 +2216,146 @@ export function DashboardApp() {
                     </Button>
                   </div>
                 </div>
+              </div>
 
-                <div className="space-y-5">
-                  {/* Preview */}
-                  <div className="section-surface p-6">
-                    <div className="mb-4">
-                      <h2 className="text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">Live preview</h2>
-                    </div>
-                    {/* Widget home screen preview */}
-                    <div
-                      className="mx-auto w-full max-w-[340px] overflow-hidden rounded-[20px] border border-black/10 shadow-xl"
-                      style={{ fontFamily: 'Inter, sans-serif', background: '#ffffff' }}
-                    >
-                      {/* Topbar */}
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                        <div className="w-4 h-4" />
-                        <span className="text-xs font-medium text-gray-400">Home</span>
-                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-gray-400 text-xs cursor-pointer">×</div>
-                      </div>
-                      {/* Home body */}
-                      <div className="px-5 pt-5 pb-3 space-y-4">
-                        <h2 className="text-xl font-bold text-gray-900 leading-tight">{widgetConfig.homeTitle || 'Start a conversation'}</h2>
-                        {/* Agent card */}
-                        <div className="rounded-2xl border border-gray-100 p-4 shadow-sm space-y-3">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white"
-                              style={{ background: widgetConfig.primaryColor }}
-                            >
-                              {widgetConfig.logoUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={widgetConfig.logoUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
-                              ) : (
-                                <Bot className="h-4 w-4" />
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-sm font-semibold text-gray-900">{widgetConfig.botName}</span>
-                              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                              <span className="text-xs text-gray-400">online</span>
-                            </div>
-                          </div>
-                          {widgetConfig.welcomeMessage && (
-                            <p className="text-sm text-gray-600 leading-relaxed">{widgetConfig.welcomeMessage}</p>
-                          )}
-                          <button
-                            type="button"
-                            className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                            style={{ background: widgetConfig.primaryColor }}
-                          >
-                            Let&#39;s chat
-                            <span>→</span>
-                          </button>
-                        </div>
-                        {/* Quick links preview */}
-                        {widgetConfig.quickLinks.length > 0 && (
-                          <div className="space-y-1.5">
-                            {widgetConfig.quickLinks.slice(0, 3).map((ql, i) => (
-                              <div key={i} className="flex items-center justify-between rounded-xl border border-gray-100 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
-                                <span>{ql.label}</span>
-                                <span className="text-gray-400 text-xs">→</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      {/* Tab bar */}
-                      <div className="flex border-t border-gray-100">
-                        <div className="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-medium" style={{ color: widgetConfig.primaryColor }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
-                          Home
-                        </div>
-                        <div className="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-medium text-gray-400">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                          Chat
-                        </div>
-                      </div>
-                      {/* Footer */}
-                      <div className="border-t border-gray-100 py-2 text-center text-[10px] text-gray-400">
-                        powered by <span className="font-semibold text-gray-500">konvoq</span>
-                      </div>
-                    </div>
+              {/* Right: full height iframe */}
+              <div style={{ flex: '0 0 50%', height: '100%' }}>
+                <iframe
+                  ref={widgetPreviewIframeRef}
+                  src="/widget-preview"
+                  title="Widget preview"
+                  style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+                  onLoad={() => {
+                    setWidgetPreviewReady(true);
+                    postWidgetConfig(widgetConfig);
+                  }}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {/* ── Live Sessions ── */}
+          {activeSection === 'live' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h1 className="ds-page-title">Live Sessions</h1>
+                    <p className="ds-page-subtitle">Active conversations happening right now. Auto-refreshes every 30s.</p>
                   </div>
-
-                  {/* Widget key & embed */}
-                  <div className="section-surface p-6">
-                    <div className="mb-5">
-                      <h2 className="mb-2 text-xl font-bold tracking-[-0.03em] text-[var(--text-1)]">Install</h2>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="section-surface flex items-center justify-between p-4">
-                        <span className="text-sm text-[var(--text-2)]">Widget key</span>
-                        <span className="font-mono text-xs text-[var(--text-1)]">{widget?.widgetKey || '—'}</span>
-                      </div>
-                    </div>
-
-                    {embedCode ? (
-                      <div className="mt-4">
-                        <pre className="dashboard-code-block mb-3">{embedCode}</pre>
-                        <div className="flex gap-2">
-                          <Button variant="outline" className="flex-1" onClick={async () => { await navigator.clipboard.writeText(embedCode); toast.success('Copied'); }}>
-                            <Copy className="h-4 w-4" />
-                            Copy script
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-4 dashboard-empty">Save widget to generate the embed script.</div>
-                    )}
-
-                    {widget?.widgetKey ? (
-                      <div className="mt-4 border-t border-white/8 pt-4">
-                        <Button variant="ghost" className="w-full text-[var(--text-3)]" onClick={handleRegenerateKey} disabled={isRegeneratingKey}>
-                          <Key className="h-4 w-4" />
-                          {isRegeneratingKey ? 'Regenerating...' : 'Regenerate widget key'}
-                        </Button>
-                        <p className="mt-2 text-center text-xs text-[var(--text-3)]">Old embed scripts will break until updated</p>
-                      </div>
-                    ) : null}
+                  <div className="flex items-center gap-3">
+                    <span className="ds-live-badge">
+                      <span className="ds-live-dot" />
+                      {activeSessions2.length} active
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={() => void apiClient.get('/dashboard/chat-sessions').then((res) => setChatSessions(res.data?.sessions || [])).catch(() => {})}>
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               </div>
+
+              {/* KPI row */}
+              <div className="ds-metric-grid mb-6">
+                {[
+                  { label: 'Active now', value: activeSessions2.length, color: '#22c55e' },
+                  { label: 'Total sessions', value: totalSessionsCount },
+                  { label: 'Completed', value: completedSessionsCount },
+                  { label: 'Avg messages', value: avgMsgsPerSession },
+                ].map((m) => (
+                  <div key={m.label} className="ds-metric-card">
+                    <div className="ds-metric-card-head"><span className="ds-metric-label">{m.label}</span></div>
+                    <div className="ds-metric-value" style={m.color ? { color: m.color } : {}}>{m.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {activeSessions2.length === 0 ? (
+                <div className="section-surface p-12 text-center">
+                  <Monitor className="h-8 w-8 mx-auto mb-3 text-[var(--text-3)]" />
+                  <p className="text-sm text-[var(--text-3)]">No active sessions right now.</p>
+                  <p className="text-xs text-[var(--text-3)] mt-1">Sessions appear here in real time when visitors start chatting.</p>
+                </div>
+              ) : (
+                <div className="ds-live-grid">
+                  {activeSessions2.map((session) => (
+                    <div key={session.id} className="ds-live-card">
+                      <div className="ds-live-card-header">
+                        <div className="ds-live-indicator" />
+                        <div className="ds-live-card-title truncate">{session.lastMessagePreview || 'Active visitor'}</div>
+                        <span className="ds-live-card-time">{formatDateTime(session.lastMessageAt || session.createdAt)}</span>
+                      </div>
+                      <div className="ds-live-card-meta">
+                        <span className="dashboard-chip">{session.messageCount || 0} msgs</span>
+                        <span className="dashboard-chip ds-status-chip" data-status="active">ACTIVE</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="ds-live-view-btn"
+                        onClick={() => { navigateTo('chat'); void loadChatSession(session.id); }}
+                      >
+                        View transcript
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {/* ── Escalation Log ── */}
+          {activeSection === 'escalations' ? (
+            <div className="ds-section-wrap">
+              <div className="ds-page-header-simple">
+                <h1 className="ds-page-title">Escalation Log</h1>
+                <p className="ds-page-subtitle">History of sessions escalated to a human agent.</p>
+              </div>
+
+              {/* Summary KPIs */}
+              <div className="ds-metric-grid mb-6">
+                {[
+                  { label: 'Total escalations', value: handoffs.length },
+                  { label: 'Pending', value: handoffs.filter((h) => h.status === 'pending').length },
+                  { label: 'Claimed', value: handoffs.filter((h) => h.status === 'claimed').length },
+                  { label: 'Resolved', value: handoffs.filter((h) => h.status === 'resolved').length },
+                ].map((m) => (
+                  <div key={m.label} className="ds-metric-card">
+                    <div className="ds-metric-card-head"><span className="ds-metric-label">{m.label}</span></div>
+                    <div className="ds-metric-value">{m.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {handoffs.length === 0 ? (
+                <div className="section-surface p-12 text-center">
+                  <AlertCircle className="h-8 w-8 mx-auto mb-3 text-[var(--text-3)]" />
+                  <p className="text-sm text-[var(--text-3)]">No escalations recorded yet.</p>
+                  <p className="text-xs text-[var(--text-3)] mt-1">Escalations appear here when visitors request a human agent.</p>
+                </div>
+              ) : (
+                <div className="section-surface overflow-hidden">
+                  <div className="ds-esc-table-header">
+                    <div>Visitor</div>
+                    <div>Trigger</div>
+                    <div>Status</div>
+                    <div>Agent</div>
+                    <div>Date</div>
+                  </div>
+                  {handoffs.map((h) => (
+                    <div key={h.id} className="ds-esc-row">
+                      <div className="font-medium text-[var(--text-1)] text-sm truncate">{h.visitorName || h.visitorEmail || 'Visitor'}</div>
+                      <div className="text-xs text-[var(--text-2)] truncate">{h.triggerReason || '—'}</div>
+                      <div>
+                        <span className={`ds-esc-status ${h.status === 'pending' ? 'ds-esc-status--pending' : h.status === 'claimed' ? 'ds-esc-status--claimed' : 'ds-esc-status--resolved'}`}>
+                          {h.status || 'pending'}
+                        </span>
+                      </div>
+                      <div className="text-xs text-[var(--text-2)] truncate">{h.claimedBy || '—'}</div>
+                      <div className="text-xs text-[var(--text-3)]">{formatDateTime(h.createdAt)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : null}
 
@@ -1842,26 +2368,50 @@ export function DashboardApp() {
               </div>
               <div className="ds-two-col">
                 <div className="section-surface p-6">
-                  <div className="mb-4 flex items-center gap-3">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-3)]" />
-                      <input
-                        type="text"
-                        placeholder="Search conversations..."
-                        className="w-full rounded-xl border border-white/10 bg-[var(--surface)] py-2 pl-8 pr-3 text-sm text-[var(--text-1)] outline-none"
-                        value={chatSearch}
-                        onChange={(e) => setChatSearch(e.target.value)}
-                      />
+                  <div className="mb-4 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-3)]" />
+                        <input
+                          type="text"
+                          placeholder="Search conversations..."
+                          className="w-full rounded-xl border border-white/10 bg-[var(--surface)] py-2 pl-8 pr-3 text-sm text-[var(--text-1)] outline-none"
+                          value={chatSearch}
+                          onChange={(e) => setChatSearch(e.target.value)}
+                        />
+                      </div>
+                      <select
+                        className="rounded-xl border border-white/10 bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-1)] outline-none"
+                        value={chatStatusFilter}
+                        onChange={(e) => setChatStatusFilter(e.target.value)}
+                      >
+                        <option value="all">All</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                        <option value="closed">Closed</option>
+                      </select>
                     </div>
-                    <select
-                      className="rounded-xl border border-white/10 bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-1)] outline-none"
-                      value={chatStatusFilter}
-                      onChange={(e) => setChatStatusFilter(e.target.value)}
-                    >
-                      <option value="all">All</option>
-                      <option value="active">Active</option>
-                      <option value="closed">Closed</option>
-                    </select>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-[var(--text-3)] shrink-0">Date:</span>
+                      <input
+                        type="date"
+                        className="flex-1 rounded-xl border border-white/10 bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text-1)] outline-none"
+                        value={chatDateFrom}
+                        onChange={(e) => setChatDateFrom(e.target.value)}
+                      />
+                      <span className="text-xs text-[var(--text-3)]">–</span>
+                      <input
+                        type="date"
+                        className="flex-1 rounded-xl border border-white/10 bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text-1)] outline-none"
+                        value={chatDateTo}
+                        onChange={(e) => setChatDateTo(e.target.value)}
+                      />
+                      {(chatDateFrom || chatDateTo) && (
+                        <button type="button" className="text-[var(--text-3)] hover:text-[var(--text-1)]" onClick={() => { setChatDateFrom(''); setChatDateTo(''); }}>
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {filteredChatSessions.length === 0 ? (
@@ -1955,6 +2505,10 @@ export function DashboardApp() {
                   Lead List
                   {leads.length > 0 && <span className="ds-nav-count">{leads.length}</span>}
                 </button>
+                <button type="button" className="ds-tab" data-active={leadsTab === 'scoring'} onClick={() => setLeadsTab('scoring')}>
+                  <Star className="h-3.5 w-3.5" />
+                  Lead Scoring
+                </button>
                 <button type="button" className="ds-tab" data-active={leadsTab === 'webhook'} onClick={() => setLeadsTab('webhook')}>
                   <Webhook className="h-3.5 w-3.5" />
                   Webhook
@@ -1981,14 +2535,48 @@ export function DashboardApp() {
                     ))}
                   </div>
 
+                  {/* Bulk action bar */}
+                  {selectedLeadIds.size > 0 && (
+                    <div className="ds-bulk-bar mb-4">
+                      <div className="flex items-center gap-3">
+                        <CheckSquare className="h-4 w-4 text-[var(--accent-strong)]" />
+                        <span className="text-sm font-semibold text-[var(--text-1)]">{selectedLeadIds.size} selected</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button type="button" className="ds-bulk-btn" onClick={handleExportCSV}>Export CSV</button>
+                        <button type="button" className="ds-bulk-btn" disabled={isBulkContacting} onClick={() => void handleBulkMarkContacted()}>
+                          {isBulkContacting ? 'Updating...' : 'Mark contacted'}
+                        </button>
+                        <button type="button" className="ds-bulk-btn ds-bulk-btn--danger" disabled={isBulkDeleting} onClick={() => void handleBulkDelete()}>
+                          {isBulkDeleting ? 'Deleting...' : 'Delete'}
+                        </button>
+                        <button type="button" className="text-[var(--text-3)] hover:text-[var(--text-1)]" onClick={() => setSelectedLeadIds(new Set())}>
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {leads.length === 0 ? (
                     <div className="dashboard-empty">Leads captured from the widget will appear here.</div>
                   ) : (
                     <div className="space-y-3">
                       {leads.map((lead) => (
-                        <div key={lead.id} className="section-surface p-5">
+                        <div key={lead.id} className={`section-surface p-5 transition-colors ${selectedLeadIds.has(lead.id) ? 'ring-1 ring-[var(--accent-strong)]/40' : ''}`}>
                           <div className="flex flex-wrap items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
+                              <input
+                                type="checkbox"
+                                className="ds-lead-checkbox"
+                                checked={selectedLeadIds.has(lead.id)}
+                                onChange={(e) => {
+                                  setSelectedLeadIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (e.target.checked) next.add(lead.id); else next.delete(lead.id);
+                                    return next;
+                                  });
+                                }}
+                              />
                               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent-muted)] text-[var(--accent-strong)] text-sm font-bold">
                                 {(lead.name || lead.email || 'L')[0].toUpperCase()}
                               </div>
@@ -2021,6 +2609,42 @@ export function DashboardApp() {
                           <div className="mt-2 text-xs text-[var(--text-3)]">{formatDateTime(lead.createdAt)}</div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              ) : leadsTab === 'scoring' ? (
+                <div>
+                  <div className="section-surface p-5 mb-6">
+                    <h2 className="text-sm font-semibold text-[var(--text-1)] mb-1">How scoring works</h2>
+                    <p className="text-xs text-[var(--text-2)] leading-relaxed">Leads are auto-scored 0–100 based on contact completeness (email +20, name +10, phone +15), engagement (message +10), status qualification (+10–25), and recency (newer = higher). Use scores to prioritize outreach.</p>
+                  </div>
+                  {scoredLeads.length === 0 ? (
+                    <div className="dashboard-empty">No leads to score yet.</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {scoredLeads.map((lead) => {
+                        const scoreColor = lead.score >= 70 ? '#22c55e' : lead.score >= 40 ? '#f59e0b' : '#ef4444';
+                        const tierLabel = lead.score >= 70 ? 'Hot' : lead.score >= 40 ? 'Warm' : 'Cold';
+                        return (
+                          <div key={lead.id} className="ds-score-row section-surface">
+                            <div className="ds-score-avatar">{(lead.name || lead.email || 'L')[0].toUpperCase()}</div>
+                            <div className="ds-score-info">
+                              <div className="text-sm font-semibold text-[var(--text-1)]">{lead.name || lead.email || 'Unknown'}</div>
+                              {lead.email && lead.name && <div className="text-xs text-[var(--text-3)]">{lead.email}</div>}
+                              <div className="text-xs text-[var(--text-3)] capitalize">{lead.status || 'new'} · {formatDate(lead.createdAt)}</div>
+                            </div>
+                            <div className="ds-score-bar-wrap">
+                              <div className="ds-score-bar">
+                                <div className="ds-score-bar-fill" style={{ width: `${lead.score}%`, background: scoreColor }} />
+                              </div>
+                            </div>
+                            <div className="ds-score-val" style={{ color: scoreColor }}>
+                              <span className="ds-score-num">{lead.score}</span>
+                              <span className="ds-score-tier" style={{ background: `${scoreColor}20`, color: scoreColor }}>{tierLabel}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -2084,7 +2708,7 @@ export function DashboardApp() {
                       <div className="ds-plan-gate-inline">
                         <Lock className="h-4 w-4 text-[var(--text-3)]" />
                         <span className="text-sm text-[var(--text-3)]">Auto Follow-Up is available on PRO and above</span>
-                        <button type="button" className="ds-upgrade-cta-sm" onClick={() => setActiveSection('plan')}>Upgrade</button>
+                        <button type="button" className="ds-upgrade-cta-sm" onClick={() => navigateTo('plan')}>Upgrade</button>
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -2428,7 +3052,7 @@ export function DashboardApp() {
                 <div className="ds-plan-gate">
                   <Lock className="h-8 w-8 text-[var(--text-3)]" />
                   <p className="text-sm font-semibold text-[var(--text-2)]">Persona Builder is available on PRO and above</p>
-                  <button type="button" className="ds-upgrade-cta" onClick={() => setActiveSection('plan')}>View Plans</button>
+                  <button type="button" className="ds-upgrade-cta" onClick={() => navigateTo('plan')}>View Plans</button>
                 </div>
               ) : (
                 <div className="ds-two-col">
@@ -2532,7 +3156,7 @@ export function DashboardApp() {
                 <div className="ds-plan-gate">
                   <Lock className="h-8 w-8 text-[var(--text-3)]" />
                   <p className="text-sm font-semibold text-[var(--text-2)]">Navigation Builder is available on PRO and above</p>
-                  <button type="button" className="ds-upgrade-cta" onClick={() => setActiveSection('plan')}>View Plans</button>
+                  <button type="button" className="ds-upgrade-cta" onClick={() => navigateTo('plan')}>View Plans</button>
                 </div>
               ) : (
                 <div className="ds-two-col">
@@ -2647,7 +3271,7 @@ export function DashboardApp() {
                       <div className="ds-plan-gate-inline">
                         <Lock className="h-4 w-4 text-[var(--text-3)]" />
                         <span className="text-sm text-[var(--text-3)]">Available on PRO and above</span>
-                        <button type="button" className="ds-upgrade-cta-sm" onClick={() => setActiveSection('plan')}>Upgrade</button>
+                        <button type="button" className="ds-upgrade-cta-sm" onClick={() => navigateTo('plan')}>Upgrade</button>
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -2709,7 +3333,7 @@ export function DashboardApp() {
                 <div className="ds-plan-gate">
                   <Lock className="h-8 w-8 text-[var(--text-3)]" />
                   <p className="text-sm font-semibold text-[var(--text-2)]">CRM Pipeline is available on PRO and above</p>
-                  <button type="button" className="ds-upgrade-cta" onClick={() => setActiveSection('plan')}>View Plans</button>
+                  <button type="button" className="ds-upgrade-cta" onClick={() => navigateTo('plan')}>View Plans</button>
                 </div>
               ) : (
                 <div>
@@ -2817,7 +3441,7 @@ export function DashboardApp() {
                 <div className="ds-plan-gate">
                   <Lock className="h-8 w-8 text-[var(--text-3)]" />
                   <p className="text-sm font-semibold text-[var(--text-2)]">Hybrid AI+Human Inbox is available on PRO and above</p>
-                  <button type="button" className="ds-upgrade-cta" onClick={() => setActiveSection('plan')}>View Plans</button>
+                  <button type="button" className="ds-upgrade-cta" onClick={() => navigateTo('plan')}>View Plans</button>
                 </div>
               ) : (
                 <div className="ds-two-col">
@@ -2932,7 +3556,7 @@ export function DashboardApp() {
                 <div className="ds-plan-gate">
                   <Lock className="h-8 w-8 text-[var(--text-3)]" />
                   <p className="text-sm font-semibold text-[var(--text-2)]">Conversation Flows are available on PRO and above</p>
-                  <button type="button" className="ds-upgrade-cta" onClick={() => setActiveSection('plan')}>View Plans</button>
+                  <button type="button" className="ds-upgrade-cta" onClick={() => navigateTo('plan')}>View Plans</button>
                 </div>
               ) : (
                 <div className="ds-two-col">
